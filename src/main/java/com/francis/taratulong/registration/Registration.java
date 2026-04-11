@@ -1,0 +1,45 @@
+package com.francis.taratulong.registration;
+
+
+import com.francis.taratulong.Status;
+import com.francis.taratulong.event.Event;
+import com.francis.taratulong.user.volunteer.Volunteer;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter@Setter@NoArgsConstructor
+public class Registration {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "volunteer_id")
+    private Volunteer volunteer;
+
+    @ManyToOne
+    @JoinColumn(name = "event_id")
+    private Event event;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Status registrationStatus = Status.PENDING;
+
+    @Column(nullable = false)
+    private Boolean participated = false;
+
+    @Column()
+    @Min(1)
+    @Max(5)
+    private int rating;
+
+    @Column(nullable = false)
+    private LocalDateTime appliedAt;
+}
