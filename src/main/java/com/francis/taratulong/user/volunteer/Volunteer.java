@@ -10,11 +10,10 @@ import lombok.Setter;
 @Getter@Setter@NoArgsConstructor
 public class Volunteer extends AppUser {
 
-    @Column(length = 100)
+    @Column(length = 50, nullable = false)
     private String firstName;
 
-    @Column(length = 100)
+    @Column(length = 50, nullable = false)
     private String lastName;
-
 
 }

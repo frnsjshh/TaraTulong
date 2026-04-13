@@ -18,13 +18,15 @@ public class Org extends AppUser {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
     private String location;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status;
 
     @ManyToOne
-    @JoinColumn(name = "approved_by")
+    @JoinColumn(name = "approved_by", nullable = false)
     private Admin admin;
 
     @OneToMany(mappedBy = "organizer")

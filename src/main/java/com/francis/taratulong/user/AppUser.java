@@ -9,17 +9,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter@Setter@NoArgsConstructor
 @Table(name="app_users")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class AppUser {
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String uuid;
+    @Column(nullable = false, updatable = false, unique = true)
+    private UUID uuid;
 
     @Column (nullable = false)
     @Email
