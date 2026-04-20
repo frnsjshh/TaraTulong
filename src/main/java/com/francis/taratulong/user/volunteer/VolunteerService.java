@@ -18,7 +18,7 @@ public class VolunteerService {
 
     public Volunteer saveVolunteer(Volunteer volunteer) {
         Volunteer dbFound = volunteerRepository.findByEmail(volunteer.getEmail()).orElse(null);
-        if(dbFound != null && !dbFound.getIsDeleted()) {
+        if(dbFound != null && !dbFound.isDeleted()) {
             throw new UserAlreadyExistsException("Cannot create account. Email already in use.", volunteer.getEmail());
         }
         volunteer.setRole(Role.VOLUNTEER);
@@ -39,7 +39,7 @@ public class VolunteerService {
     public Volunteer updateEmail(Long id, String email) {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("User not found." + id));
         Volunteer userFoundThroughEmail = volunteerRepository.findByEmail(email).orElse(null);
-        if(userFoundThroughEmail!=null && !userFoundThroughEmail.getIsDeleted()) {
+        if(userFoundThroughEmail!=null && !userFoundThroughEmail.isDeleted()) {
             throw new UserAlreadyExistsException("Email already in use.", userFoundThroughEmail.getEmail());
         }
         volunteer.setEmail(email);
@@ -48,6 +48,6 @@ public class VolunteerService {
 
     public void deleteVolunteer(Long id) {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete volunteer. Volunteer not found: " + id));
-        volunteer.setIsDeleted(true);
+        volunteer.setDeleted(true);
     }
 }

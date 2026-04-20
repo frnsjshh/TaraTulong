@@ -14,7 +14,7 @@ public class OrgService {
 
     public Org saveOrg(Org org) {
         Org dbFound = orgRepository.findByEmail(org.getEmail()).orElse(null);
-        if(dbFound==null||!dbFound.getIsDeleted()) {
+        if(dbFound==null||!dbFound.isDeleted()) {
             throw  new UserAlreadyExistsException("Cannot create account. Email already in use", org.getEmail());
         }
         org.setRole(Role.ORG);
@@ -34,7 +34,7 @@ public class OrgService {
     public Org updateEmail(Long id, String email) {
         Org org = orgRepository.findById(id).orElseThrow(()-> new UserNotFoundException("User not found." + id));
         Org userFoundThroughEmail = orgRepository.findByEmail(email).orElse(null);
-        if(userFoundThroughEmail!=null && !userFoundThroughEmail.getIsDeleted()) {
+        if(userFoundThroughEmail!=null && !userFoundThroughEmail.isDeleted()) {
             throw new UserAlreadyExistsException("Email already in use.", userFoundThroughEmail.getEmail());
         } else {
             org.setEmail(email);
@@ -43,6 +43,6 @@ public class OrgService {
     }
     public void deleteOrg(Long id) {
         Org org = orgRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete user. User not found"));
-        org.setIsDeleted(true);
+        org.setDeleted(true);
     }
 }

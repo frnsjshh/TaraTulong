@@ -34,5 +34,5 @@ public class AppUser {
     private LocalDateTime joinDate;
 
     @Column(nullable = false)
-    private Boolean isDeleted = false;
+    private boolean deleted = false;
 }
