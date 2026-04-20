@@ -1,12 +1,10 @@
 package com.francis.taratulong.user.volunteer;
 
-import com.francis.taratulong.user.volunteer.dto.EmailUpdateRequestDTO;
+import com.francis.taratulong.user.volunteer.dto.VolunteerEmailUpdateRequestDTO;
 import com.francis.taratulong.user.volunteer.dto.VolunteerMapper;
 import com.francis.taratulong.user.volunteer.dto.VolunteerRequestDTO;
 import com.francis.taratulong.user.volunteer.dto.VolunteerResponseDTO;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -37,7 +35,7 @@ public class VolunteerController {
         );
     }
     @PatchMapping("/{id}/email")
-    public VolunteerResponseDTO updateEmail(@PathVariable Long id, @Valid@RequestBody EmailUpdateRequestDTO emailRequestDTO) {
+    public VolunteerResponseDTO updateEmail(@PathVariable Long id, @Valid@RequestBody VolunteerEmailUpdateRequestDTO emailRequestDTO) {
         return VolunteerMapper.toResponseDTO(volunteerService.updateEmail(id, emailRequestDTO.email()));
     }
 

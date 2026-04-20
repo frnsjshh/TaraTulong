@@ -18,7 +18,6 @@ public class Admin extends AppUser {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
     @OneToMany(mappedBy = "admin")
     private List<Org> org;
 }

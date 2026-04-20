@@ -23,7 +23,7 @@ public class AppUser {
     @Column(nullable = false, updatable = false, unique = true)
     private UUID uuid;
 
-    @Column (nullable = false)
+    @Column (nullable = false, unique = true)
     @Email
     private String email;
 

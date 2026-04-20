@@ -3,6 +3,7 @@ package com.francis.taratulong.user.volunteer;
 
 import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
+import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +17,11 @@ public class VolunteerService {
     }
 
     public Volunteer saveVolunteer(Volunteer volunteer) {
-        if(volunteerRepository.findByEmail(volunteer.getEmail()).isPresent()) {
+        Volunteer dbFound = volunteerRepository.findByEmail(volunteer.getEmail()).orElse(null);
+        if(dbFound != null && !dbFound.getIsDeleted()) {
             throw new UserAlreadyExistsException("Cannot create account. Email already in use.", volunteer.getEmail());
         }
+        volunteer.setRole(Role.VOLUNTEER);
         return volunteerRepository.save(volunteer);
     }
 
@@ -30,7 +33,7 @@ public class VolunteerService {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(() -> new UserNotFoundException("Volunteer not found:" + id));
         volunteer.setFirstName(volunteerRequest.getFirstName());
         volunteer.setLastName(volunteerRequest.getLastName());
-        return saveVolunteer(volunteer);
+        return volunteer;
     }
 
     public Volunteer updateEmail(Long id, String email) {
@@ -40,12 +43,11 @@ public class VolunteerService {
             throw new UserAlreadyExistsException("Email already in use.", userFoundThroughEmail.getEmail());
         }
         volunteer.setEmail(email);
-        return volunteerRepository.save(volunteer);
+        return volunteer;
     }
 
     public void deleteVolunteer(Long id) {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete volunteer. Volunteer not found: " + id));
         volunteer.setIsDeleted(true);
-        volunteerRepository.save(volunteer);
     }
 }

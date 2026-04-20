@@ -15,6 +15,9 @@ import java.util.List;
 @Getter@Setter@NoArgsConstructor
 public class Org extends AppUser {
 
+    @Column(nullable = false)
+    private String name;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -23,7 +26,7 @@ public class Org extends AppUser {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private Status status = Status.PENDING;
 
     @ManyToOne
     @JoinColumn(name = "approved_by", nullable = false)

@@ -1,10 +1,10 @@
-package com.francis.taratulong.user.volunteer.dto;
+package com.francis.taratulong.user.organization.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public record EmailUpdateRequestDTO(
-        @NotBlank(message = "Email is required")
+public record OrgEmailUpdateRequestDTO(
+        @NotBlank(message = "Email required")
         @Email(message = "Invalid email format")
         String email
 ) {
