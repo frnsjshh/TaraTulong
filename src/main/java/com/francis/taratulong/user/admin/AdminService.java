@@ -3,6 +3,8 @@ package com.francis.taratulong.user.admin;
 import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
+import com.francis.taratulong.user.organization.Org;
+import com.francis.taratulong.user.organization.OrgService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,8 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AdminService {
     private final AdminRepository adminRepository;
+    private final OrgService orgService;
 
-    public AdminService(AdminRepository adminRepository) {
+    public AdminService(AdminRepository adminRepository, OrgService orgService) {
+        this.orgService = orgService;
         this.adminRepository = adminRepository;
     }
 
@@ -47,5 +51,11 @@ public class AdminService {
     public void deleteAdmin(Long id) {
         Admin admin = adminRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete user. User not found."));
         admin.setIsDeleted(true);
+    }
+
+    public void approveOrg(Long adminID, Long orgID) {
+        Org org = orgService.getOrg(orgID);
+        org.setStatus(com.francis.taratulong.Status.APPROVED);
+        org.setApprovedBy(getAdmin(adminID));
     }
 }

@@ -36,6 +36,11 @@ public class AdminController {
         return AdminMapper.toResponse(adminService.updateEmail(id, emailRequestDTO.email()));
     }
 
+    @PatchMapping("/{id}/approve/{orgId}")
+    public void approveOrg(@PathVariable Long id, @PathVariable Long orgId){
+        adminService.approveOrg(id, orgId);
+    }
+
     @DeleteMapping("/{id}")
     public void deleteAdmin(@PathVariable Long id){
         adminService.deleteAdmin(id);

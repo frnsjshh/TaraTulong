@@ -30,7 +30,7 @@ public class Org extends AppUser {
 
     @ManyToOne
     @JoinColumn(name = "approved_by", nullable = false)
-    private Admin admin;
+    private Admin approvedBy;
 
     @OneToMany(mappedBy = "organizer")
     private List<Event> events;
