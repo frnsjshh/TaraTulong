@@ -39,4 +39,8 @@ public class Event {
 
     @Column(nullable = false)
     private int slotsAvailable;
+
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
 }
