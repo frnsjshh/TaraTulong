@@ -7,6 +7,7 @@ import jdk.jfr.Timestamp;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -30,7 +31,9 @@ public class AppUser {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
-    @Timestamp
+
+    @CreationTimestamp
+    @Column(nullable = false)
     private LocalDateTime joinDate;
 
     @Column(nullable = false)

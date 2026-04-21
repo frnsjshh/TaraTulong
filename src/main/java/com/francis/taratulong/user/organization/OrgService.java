@@ -3,9 +3,13 @@ package com.francis.taratulong.user.organization;
 import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
+import jakarta.transaction.Transactional;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.stereotype.Service;
 
 @Service
+@Transactional
+@SQLRestriction("deleted=false")
 public class OrgService {
     private final OrgRepository orgRepository;
     public OrgService(OrgRepository orgRepository) {
@@ -14,7 +18,7 @@ public class OrgService {
 
     public Org saveOrg(Org org) {
         Org dbFound = orgRepository.findByEmail(org.getEmail()).orElse(null);
-        if(dbFound==null||!dbFound.isDeleted()) {
+        if(dbFound!=null&&!dbFound.isDeleted()) {
             throw  new UserAlreadyExistsException("Cannot create account. Email already in use", org.getEmail());
         }
         org.setRole(Role.ORG);

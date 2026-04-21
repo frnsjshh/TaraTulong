@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 @Transactional
-@SQLRestriction("is_deleted=false")
+@SQLRestriction("deleted=false")
 public class EventService {
     private final EventRepository eventRepository;
     private final OrgRepository orgRepository;
