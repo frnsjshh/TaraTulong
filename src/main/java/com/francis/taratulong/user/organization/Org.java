@@ -28,11 +28,11 @@ public class Org extends AppUser {
     @Enumerated(EnumType.STRING)
     private Status status = Status.PENDING;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by", nullable = false)
     private Admin approvedBy;
 
-    @OneToMany(mappedBy = "organizer")
+    @OneToMany(mappedBy = "organizer", fetch = FetchType.LAZY)
     private List<Event> events;
 
 }

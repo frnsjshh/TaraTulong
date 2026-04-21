@@ -2,14 +2,17 @@ package com.francis.taratulong.event;
 
 import com.francis.taratulong.exception.EventNotFoundException;
 import com.francis.taratulong.exception.UserNotFoundException;
+import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgRepository;
 import jakarta.transaction.Transactional;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 @Transactional
+@SQLRestriction("is_deleted=false")
 public class EventService {
     private final EventRepository eventRepository;
     private final OrgRepository orgRepository;
@@ -19,9 +22,8 @@ public class EventService {
     }
 
     public Event saveEvent(Long orgId, Event event) {
-        if(orgRepository.findById(orgId).isEmpty()) {
-            throw new UserNotFoundException("Cannot create event. Organization not found.");
-        }
+        Org org = orgRepository.findById(orgId).orElseThrow(()->new UserNotFoundException("Cannot create event. Organization not found."));
+        event.setOrganizer(org);
         return eventRepository.save(event);
     }
 

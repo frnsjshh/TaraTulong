@@ -27,7 +27,7 @@ public class EventController {
     }
 
     @GetMapping("/org/{orgId}")
-    private List<EventResponseDTO> getEventByOrganizer(@PathVariable Long orgId){
+    public List<EventResponseDTO> getEventByOrganizer(@PathVariable Long orgId){
         return eventService.getEventByOrganizer(orgId).stream().map(EventMapper::toResponseDTO).toList();
     }
 
