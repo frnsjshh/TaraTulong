@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -40,6 +41,7 @@ public class Registration {
     @Max(5)
     private int rating;
 
+    @CreationTimestamp
     @Column(nullable = false)
     private LocalDateTime appliedAt;
 }
