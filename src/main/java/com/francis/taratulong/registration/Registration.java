@@ -39,7 +39,10 @@ public class Registration {
     @Column()
     @Min(1)
     @Max(5)
-    private int rating;
+    private Integer rating;
+
+    @Column(columnDefinition = "TEXT")
+    private String feedback;
 
     @CreationTimestamp
     @Column(nullable = false)
