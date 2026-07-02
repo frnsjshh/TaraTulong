@@ -4,9 +4,8 @@ import com.francis.taratulong.event.dto.EventMapper;
 import com.francis.taratulong.event.dto.EventRequestDTO;
 import com.francis.taratulong.event.dto.EventResponseDTO;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/events")
@@ -22,13 +21,22 @@ public class EventController {
         return EventMapper.toResponseDTO(eventService.saveEvent(requestDTO.organizerId(), EventMapper.toEntity(requestDTO)));
     }
     @GetMapping
-    public List<EventResponseDTO> getAllEvents() {
-        return eventService.getAllEvents().stream().map(EventMapper::toResponseDTO).toList();
+    public Page<EventResponseDTO> getAllEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<Event> eventPage = eventService.getAllEvents(page, size);
+        return eventPage.map(EventMapper::toResponseDTO);
     }
 
     @GetMapping("/org/{orgId}")
-    public List<EventResponseDTO> getEventByOrganizer(@PathVariable Long orgId){
-        return eventService.getEventByOrganizer(orgId).stream().map(EventMapper::toResponseDTO).toList();
+    public Page<EventResponseDTO> getEventByOrganizer(
+            @PathVariable Long orgId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        Page<Event> eventPage = eventService.getEventByOrganizer(orgId, page, size);
+        return eventPage.map(EventMapper::toResponseDTO);
     }
 
     @GetMapping("/{id}")

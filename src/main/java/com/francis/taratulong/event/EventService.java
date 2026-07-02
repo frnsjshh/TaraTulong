@@ -5,9 +5,11 @@ import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @Transactional
@@ -46,10 +48,14 @@ public class EventService {
         event.setDeleted(true);
     }
 
-    public List<Event> getEventByOrganizer(Long orgId) {
-        return eventRepository.findByOrganizerId(orgId);
+    public Page<Event> getEventByOrganizer(Long orgId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("startDateTime").descending());
+        return eventRepository.findByOrganizerId(orgId, pageable);
     }
-    public List<Event> getAllEvents() {
-        return eventRepository.findAll();
+
+    public Page<Event> getAllEvents(int page, int size) {
+            Pageable pageable = PageRequest.of(page, size, Sort.by("startDateTime").descending());
+            return eventRepository.findAll(pageable);
+
     }
 }
