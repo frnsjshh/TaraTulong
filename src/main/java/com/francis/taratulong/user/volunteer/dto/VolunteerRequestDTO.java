@@ -14,7 +14,10 @@ public record VolunteerRequestDTO(
         String firstName,
         @NotBlank(message = "Last name is required")
         @Length(min = 2, max = 50, message = "Last name must be 8-50 characters")
-        String lastName
+        String lastName,
+        @NotBlank(message = "Password is required")
+        @Length(min = 8, message = "Password must have at least be 8 characters")
+        String password
 
 ) {
 }

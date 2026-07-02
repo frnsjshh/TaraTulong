@@ -5,22 +5,35 @@ import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @Transactional
 public class VolunteerService {
     private final VolunteerRepository volunteerRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public VolunteerService(VolunteerRepository volunteerRepository) {
+    public VolunteerService(VolunteerRepository volunteerRepository, PasswordEncoder passwordEncoder) {
         this.volunteerRepository = volunteerRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Volunteer saveVolunteer(Volunteer volunteer) {
-        Volunteer dbFound = volunteerRepository.findByEmail(volunteer.getEmail()).orElse(null);
-        if(dbFound != null && !dbFound.isDeleted()) {
-            throw new UserAlreadyExistsException("Cannot create account. Email already in use.", volunteer.getEmail());
+        Optional<Volunteer> existingUser = volunteerRepository.findByEmail(volunteer.getEmail());
+        if(existingUser.isPresent()) {
+            Volunteer dbFound = existingUser.get();
+            if(!dbFound.isDeleted()) throw new UserAlreadyExistsException("User already exist", dbFound.getEmail());
+            dbFound.setPassword(passwordEncoder.encode(volunteer.getPassword()));
+            dbFound.setFirstName(volunteer.getFirstName());
+            dbFound.setLastName(volunteer.getLastName());
+            dbFound.setRole(Role.VOLUNTEER);
+            dbFound.setDeleted(false);
+            return volunteerRepository.save(dbFound);
         }
+        volunteer.setPassword(passwordEncoder.encode(volunteer.getPassword()));
         volunteer.setRole(Role.VOLUNTEER);
         return volunteerRepository.save(volunteer);
     }

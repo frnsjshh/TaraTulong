@@ -16,6 +16,7 @@ public class VolunteerMapper {
         volunteer.setEmail(volunteerRequestDTO.email());
         volunteer.setFirstName(volunteerRequestDTO.firstName());
         volunteer.setLastName(volunteerRequestDTO.lastName());
+        volunteer.setPassword(volunteerRequestDTO.password());
         return volunteer;
     }
 }
