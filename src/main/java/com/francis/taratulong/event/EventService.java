@@ -5,14 +5,12 @@ import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgRepository;
 import jakarta.transaction.Transactional;
-import org.hibernate.annotations.SQLRestriction;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 @Transactional
-@SQLRestriction("deleted=false")
 public class EventService {
     private final EventRepository eventRepository;
     private final OrgRepository orgRepository;

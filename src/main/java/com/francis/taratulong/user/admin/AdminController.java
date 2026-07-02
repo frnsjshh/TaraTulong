@@ -5,16 +5,14 @@ import com.francis.taratulong.user.admin.dto.AdminRequestDTO;
 import com.francis.taratulong.user.admin.dto.AdminResponseDTO;
 import com.francis.taratulong.user.admin.dto.AdminUpdateEmailRequestDTO;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class AdminController {
     private final AdminService adminService;
-
-    public AdminController(AdminService adminService){
-        this.adminService = adminService;
-    }
 
     @PostMapping
     public AdminResponseDTO saveAdmin(@Valid@RequestBody AdminRequestDTO requestDTO) {

@@ -1,22 +1,95 @@
 package com.francis.taratulong.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
-import java.util.HashMap;
-import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+
+
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<Map<String, String>> handleUserExist(UserAlreadyExistsException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "CONFLICT");
-        response.put("message", "Email already used.");
-        response.put("duplicateEmail", ex.getAttemptedEmail());
-        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    public ResponseEntity<ApiErrorResponse> handleUserExist(UserAlreadyExistsException ex, HttpServletRequest request) {
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(BaseNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleBaseNotFoundException(BaseNotFoundException ex, HttpServletRequest request) {
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(EventRegistrationClosed.class)
+    public ResponseEntity<ApiErrorResponse> handleEventClosed (EventRegistrationClosed ex, HttpServletRequest request) {
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(VolunteerAlreadyRegisteredException.class)
+    public ResponseEntity<ApiErrorResponse> handleVolunteerRegistered(VolunteerAlreadyRegisteredException ex, HttpServletRequest request) {
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidArgs(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        String cleanErrorMessage = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                cleanErrorMessage,
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RegistrationConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgumentException(RegistrationConflictException ex, HttpServletRequest request) {
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.CONFLICT);
+    }
 }

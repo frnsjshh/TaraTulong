@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,11 +17,13 @@ import java.util.UUID;
 @Getter@Setter@NoArgsConstructor
 @Table(name="app_users")
 @Inheritance(strategy = InheritanceType.JOINED)
+@SQLRestriction("deleted=false")
 public class AppUser {
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @UuidGenerator
     @Column(nullable = false, updatable = false, unique = true)
     private UUID uuid;
 

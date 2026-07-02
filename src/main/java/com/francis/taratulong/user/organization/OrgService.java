@@ -4,12 +4,10 @@ import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
-import org.hibernate.annotations.SQLRestriction;
 import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
-@SQLRestriction("deleted=false")
 public class OrgService {
     private final OrgRepository orgRepository;
     public OrgService(OrgRepository orgRepository) {

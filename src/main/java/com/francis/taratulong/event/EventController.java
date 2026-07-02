@@ -18,7 +18,7 @@ public class EventController {
     }
 
     @PostMapping
-    public EventResponseDTO createEvent(@Valid@RequestBody EventRequestDTO requestDTO) {
+    public EventResponseDTO createEvent(@Valid @RequestBody EventRequestDTO requestDTO) {
         return EventMapper.toResponseDTO(eventService.saveEvent(requestDTO.organizerId(), EventMapper.toEntity(requestDTO)));
     }
     @GetMapping

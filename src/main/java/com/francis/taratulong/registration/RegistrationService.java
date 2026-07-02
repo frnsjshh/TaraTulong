@@ -4,6 +4,7 @@ import com.francis.taratulong.Status;
 import com.francis.taratulong.event.Event;
 import com.francis.taratulong.event.EventService;
 import com.francis.taratulong.exception.EventRegistrationClosed;
+import com.francis.taratulong.exception.RegistrationConflictException;
 import com.francis.taratulong.exception.RegistrationNotFoundException;
 import com.francis.taratulong.exception.VolunteerAlreadyRegisteredException;
 import com.francis.taratulong.user.volunteer.VolunteerService;
@@ -61,7 +62,7 @@ public class RegistrationService {
 
     public void setRatingAndFeedback(Long id, int rating, String feedback) {
         if(rating<1 || rating>5) {
-            throw new IllegalArgumentException("Rating must be between 1 and 5.");
+            throw new RegistrationConflictException("Rating must be between 1 and 5.");
         }
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
         registrationDb.setRating(rating);
@@ -72,7 +73,7 @@ public class RegistrationService {
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
         Event event = registrationDb.getEvent();
         if(registrationDb.getRegistrationStatus()==Status.APPROVED){
-            throw new IllegalArgumentException("Registration already approved.");
+            throw new RegistrationConflictException("Registration already approved.");
         }
         if(event.getSlotsAvailable()<=0){
             throw new EventRegistrationClosed("No slots available for this event.");
@@ -84,7 +85,7 @@ public class RegistrationService {
     public void setRejected(Long id){
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
         if(registrationDb.getRegistrationStatus()==Status.REJECTED){
-            throw new IllegalArgumentException("Registration already rejected.");
+            throw new RegistrationConflictException("Registration already rejected.");
         }
 
         if(registrationDb.getRegistrationStatus()==Status.APPROVED){
