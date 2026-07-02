@@ -82,7 +82,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RegistrationConflictException.class)
-    public ResponseEntity<ApiErrorResponse> handleIllegalArgumentException(RegistrationConflictException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(RegistrationConflictException ex, HttpServletRequest request) {
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
@@ -91,5 +91,17 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return new ResponseEntity<>(apiErrorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnauthorizedAccess(UnauthorizedAccessException ex, HttpServletRequest request) {
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.UNAUTHORIZED);
     }
 }
