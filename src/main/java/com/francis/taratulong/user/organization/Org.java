@@ -29,7 +29,7 @@ public class Org extends AppUser {
     private Status status = Status.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_by", nullable = false)
+    @JoinColumn(name = "approved_by")
     private Admin approvedBy;
 
     @OneToMany(mappedBy = "organizer", fetch = FetchType.LAZY)

@@ -26,7 +26,7 @@ public class VolunteerService {
     }
 
     public Volunteer getVolunteer(Long id) {
-        return volunteerRepository.findById(id).orElseThrow(() -> new UserNotFoundException("Volunteer not found" + id));
+        return volunteerRepository.findById(id).orElseThrow(() -> new UserNotFoundException("Volunteer not found"));
     }
 
     public Volunteer updateVolunteer(Long id, Volunteer volunteerRequest) {
@@ -49,5 +49,6 @@ public class VolunteerService {
     public void deleteVolunteer(Long id) {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete volunteer. Volunteer not found: " + id));
         volunteer.setDeleted(true);
+        volunteer.setEmail(volunteer.getEmail()+ id);
     }
 }
