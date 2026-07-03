@@ -1,8 +1,11 @@
 package com.francis.taratulong.user.volunteer;
 
-import com.francis.taratulong.user.volunteer.dto.VolunteerEmailUpdateRequestDTO;
+import com.francis.taratulong.user.AppUserRequestEmailDTO;
+import com.francis.taratulong.user.AppUserRequestPasswordDTO;
+import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.volunteer.dto.VolunteerMapper;
 import com.francis.taratulong.user.volunteer.dto.VolunteerRequestDTO;
+import com.francis.taratulong.user.volunteer.dto.VolunteerRequestProfileDTO;
 import com.francis.taratulong.user.volunteer.dto.VolunteerResponseDTO;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -12,8 +15,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/volunteers")
 public class VolunteerController {
     private final VolunteerService volunteerService;
-    public VolunteerController(VolunteerService volunteerService) {
+    private final AppUserService appUserService;
+    public VolunteerController(VolunteerService volunteerService, AppUserService appUserService) {
         this.volunteerService = volunteerService;
+        this.appUserService = appUserService;
     }
 
     @PostMapping
@@ -29,14 +34,18 @@ public class VolunteerController {
     }
 
     @PutMapping("/{id}")
-    public VolunteerResponseDTO updateUser(@PathVariable Long id, @Valid@RequestBody VolunteerRequestDTO volunteerRequestDTO){
+    public VolunteerResponseDTO updateUser(@PathVariable Long id, @Valid@RequestBody VolunteerRequestProfileDTO volunteerRequestProfileDTO){
         return VolunteerMapper.toResponseDTO(
-                volunteerService.updateVolunteer(id, VolunteerMapper.toEntity(volunteerRequestDTO))
+                volunteerService.updateVolunteer(id, VolunteerMapper.toEntity(volunteerRequestProfileDTO))
         );
     }
     @PatchMapping("/{id}/email")
-    public VolunteerResponseDTO updateEmail(@PathVariable Long id, @Valid@RequestBody VolunteerEmailUpdateRequestDTO emailRequestDTO) {
-        return VolunteerMapper.toResponseDTO(volunteerService.updateEmail(id, emailRequestDTO.email()));
+    public void updateEmail(@PathVariable Long id, @Valid@RequestBody AppUserRequestEmailDTO emailRequestDTO) {
+         appUserService.updateEmail(id, emailRequestDTO.email());
+    }
+    @PatchMapping("/{id}/password")
+    public void updatePassword(@PathVariable Long id, @Valid@RequestBody AppUserRequestPasswordDTO passwordRequestDTO) {
+        appUserService.updatePassword(id, passwordRequestDTO.currentPassword(), passwordRequestDTO.password());
     }
 
     @DeleteMapping("/{id}")
