@@ -1,7 +1,7 @@
 package com.francis.taratulong.user.volunteer;
 
-import com.francis.taratulong.user.AppUserRequestEmailDTO;
-import com.francis.taratulong.user.AppUserRequestPasswordDTO;
+import com.francis.taratulong.user.dto.AppUserRequestEmailDTO;
+import com.francis.taratulong.user.dto.AppUserRequestPasswordDTO;
 import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.volunteer.dto.VolunteerMapper;
 import com.francis.taratulong.user.volunteer.dto.VolunteerRequestDTO;

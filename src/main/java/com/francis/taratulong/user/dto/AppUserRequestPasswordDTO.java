@@ -1,4 +1,4 @@
-package com.francis.taratulong.user;
+package com.francis.taratulong.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
