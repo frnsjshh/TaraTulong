@@ -4,8 +4,12 @@ import com.francis.taratulong.registration.dto.RatingAndFeedbackRequestDTO;
 import com.francis.taratulong.registration.dto.RegistrationMapper;
 import com.francis.taratulong.registration.dto.RegistrationRequestDTO;
 import com.francis.taratulong.registration.dto.RegistrationResponseDTO;
+import com.francis.taratulong.user.AppUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,40 +19,68 @@ public class RegistrationController {
     private final RegistrationService registrationService;
 
     @PostMapping
-    public RegistrationResponseDTO createRegistration(@Valid @RequestBody RegistrationRequestDTO requestDTO){
-        return RegistrationMapper.toResponseDTO(registrationService.saveRegistration(requestDTO.volunteerId(), requestDTO.eventId()));
+    public RegistrationResponseDTO createRegistration(
+            @Valid @RequestBody RegistrationRequestDTO requestDTO,
+            @AuthenticationPrincipal AppUser currentVolunteer){
+        return RegistrationMapper.toResponseDTO(registrationService.saveRegistration(currentVolunteer.getId(), requestDTO.eventId()));
     }
 
     @GetMapping("/{id}")
-    public RegistrationResponseDTO getRegistration(@PathVariable Long id){
-        return RegistrationMapper.toResponseDTO(registrationService.getRegistration(id));
+    public ResponseEntity<RegistrationResponseDTO> getRegistration(@PathVariable Long id){
+        RegistrationResponseDTO response = RegistrationMapper.toResponseDTO(registrationService.getRegistration(id));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("/{id}/present")
-    public void setRegistrationToPresent(@PathVariable Long id) {
-        registrationService.setPresent(id);
+    public ResponseEntity<Void> setRegistrationToPresent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentOrg
+    ) {
+        registrationService.setPresent(id, currentOrg.getId());
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/absent")
-    public void setRegistrationToAbsent(@PathVariable Long id) {
-        registrationService.setNotPresent(id);
+    public ResponseEntity<Void> setRegistrationToAbsent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentOrg
+    ) {
+        registrationService.setNotPresent(id, currentOrg.getId());
+        return ResponseEntity.noContent().build();
     }
     @PatchMapping("/{id}/feedback")
-    public void setRegistrationFeedback(@PathVariable Long id, @RequestBody RatingAndFeedbackRequestDTO feedbackRequestDTO) {
-        registrationService.setRatingAndFeedback(id, feedbackRequestDTO.rating(), feedbackRequestDTO.feedback());
+    public ResponseEntity<Void> setRegistrationFeedback(
+            @PathVariable Long id,
+            @RequestBody RatingAndFeedbackRequestDTO feedbackRequestDTO,
+            @AuthenticationPrincipal AppUser currentOrg
+    ) {
+        registrationService.setRatingAndFeedback(id, feedbackRequestDTO.rating(), feedbackRequestDTO.feedback(), currentOrg.getId());
+        return ResponseEntity.noContent().build();
     }
+
     @PatchMapping("/{id}/status/approved")
-    public void setRegistrationApproved(@PathVariable Long id) {
-        registrationService.setApproved(id);
+    public ResponseEntity<Void> setRegistrationApproved(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentOrg
+    ) {
+        registrationService.setApproved(id, currentOrg.getId());
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/status/rejected")
-    public void setRegistrationRejected(@PathVariable Long id) {
-        registrationService.setRejected(id);
+    public ResponseEntity<Void> setRegistrationRejected(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentOrg
+    ) {
+        registrationService.setRejected(id, currentOrg.getId());
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    public void deleteRegistration(@PathVariable Long id){
-        registrationService.deleteRegistration(id);
+    public void deleteRegistration(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentVolunteer
+    ){
+        registrationService.deleteRegistration(id, currentVolunteer.getId());
     }
 }
