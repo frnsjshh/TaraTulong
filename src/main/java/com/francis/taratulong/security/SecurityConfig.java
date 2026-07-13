@@ -50,7 +50,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/events/**").hasRole("ORG")
                         .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ORG")
 
-                        //Only volunteers can apply
+                        //Registration action for org
+                        .requestMatchers(HttpMethod.PATCH,"/registrations/**").hasRole("ORG")
+
+                        //Only volunteers can apply and delete registration
                         .requestMatchers(HttpMethod.POST, "/registrations/**").hasRole("VOLUNTEER")
                         .requestMatchers(HttpMethod.DELETE, "/registrations/**").hasRole("VOLUNTEER")
 

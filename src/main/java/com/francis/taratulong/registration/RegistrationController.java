@@ -19,16 +19,17 @@ public class RegistrationController {
     private final RegistrationService registrationService;
 
     @PostMapping
-    public RegistrationResponseDTO createRegistration(
+    public ResponseEntity<RegistrationResponseDTO> createRegistration(
             @Valid @RequestBody RegistrationRequestDTO requestDTO,
             @AuthenticationPrincipal AppUser currentVolunteer){
-        return RegistrationMapper.toResponseDTO(registrationService.saveRegistration(currentVolunteer.getId(), requestDTO.eventId()));
+        RegistrationResponseDTO response = RegistrationMapper.toResponseDTO(registrationService.saveRegistration(currentVolunteer.getId(), requestDTO.eventId()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RegistrationResponseDTO> getRegistration(@PathVariable Long id){
         RegistrationResponseDTO response = RegistrationMapper.toResponseDTO(registrationService.getRegistration(id));
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PatchMapping("/{id}/present")
@@ -77,10 +78,11 @@ public class RegistrationController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteRegistration(
+    public ResponseEntity<Void> deleteRegistration(
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentVolunteer
     ){
         registrationService.deleteRegistration(id, currentVolunteer.getId());
+        return ResponseEntity.noContent().build();
     }
 }
