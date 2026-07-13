@@ -41,17 +41,20 @@ public class SecurityConfig {
                 // Define exactly who can access what
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "events/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/volunteers").permitAll()
 
                         //Protected Routes
                         //EVENTS
-                        .requestMatchers(HttpMethod.POST, "events/**").hasRole("ORG")
-                        .requestMatchers(HttpMethod.PUT, "events/**").hasRole("ORG")
-                        .requestMatchers(HttpMethod.DELETE, "events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.POST, "/events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.PUT, "/events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ORG")
 
                         //Only volunteers can apply
-                        .requestMatchers(HttpMethod.POST, "registrations/**").hasRole("VOLUNTEER")
-                        .requestMatchers(HttpMethod.DELETE, "registrations/**").hasRole("VOLUNTEER")
+                        .requestMatchers(HttpMethod.POST, "/registrations/**").hasRole("VOLUNTEER")
+                        .requestMatchers(HttpMethod.DELETE, "/registrations/**").hasRole("VOLUNTEER")
+
+                        //Only admin can apply
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

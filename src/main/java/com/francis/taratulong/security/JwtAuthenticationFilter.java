@@ -1,6 +1,7 @@
 package com.francis.taratulong.security;
 
 import com.francis.taratulong.user.CustomUserDetailsService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,23 +49,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         // The header looks like "Bearer eyJhbGciOiJIUzI1NiJ9...", so we cut off the first 7 characters.
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUserName(jwt);
 
-        // We check if we got an email, AND we check if the user is NOT already authenticated in the current security context.
-        if(userEmail!=null && SecurityContextHolder.getContext().getAuthentication()==null) {
-            UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(userEmail);
-            if(jwtService.isTokenValid(jwt, userDetails)){
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null, // We don't put the password here for security reasons
-                        userDetails.getAuthorities() // This is where "ROLE_ORG" or "ROLE_VOLUNTEER" gets passed in!
-                );
-                // We attach some extra network details (like their IP address)
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                // 3e. We finally tell Spring Security: "This user is officially authenticated for this request."
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        try{
+            userEmail = jwtService.extractUserName(jwt);
+
+            // We check if we got an email, AND we check if the user is NOT already authenticated in the current security context.
+            if(userEmail!=null && SecurityContextHolder.getContext().getAuthentication()==null) {
+                UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(userEmail);
+                if(jwtService.isTokenValid(jwt, userDetails)){
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null, // We don't put the password here for security reasons
+                            userDetails.getAuthorities() // This is where "ROLE_ORG" or "ROLE_VOLUNTEER" gets passed in!
+                    );
+                    // We attach some extra network details (like their IP address)
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    // 3e. We finally tell Spring Security: "This user is officially authenticated for this request."
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (JwtException | IllegalArgumentException e) {
+            SecurityContextHolder.clearContext();
         }
+
         //Always pass the request to the next filter in the chain!
         filterChain.doFilter(request, response);
     }
