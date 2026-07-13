@@ -5,22 +5,25 @@ import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
 
 @Service
 @Transactional
 public class VolunteerService {
     private final VolunteerRepository volunteerRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public VolunteerService(VolunteerRepository volunteerRepository) {
+    public VolunteerService(VolunteerRepository volunteerRepository, PasswordEncoder passwordEncoder) {
         this.volunteerRepository = volunteerRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Volunteer saveVolunteer(Volunteer volunteer) {
-        Volunteer dbFound = volunteerRepository.findByEmail(volunteer.getEmail()).orElse(null);
-        if(dbFound != null && !dbFound.isDeleted()) {
-            throw new UserAlreadyExistsException("Cannot create account. Email already in use.", volunteer.getEmail());
-        }
+        Volunteer existingUser = volunteerRepository.findByEmail(volunteer.getEmail()).orElse(null);
+        if(existingUser!=null) throw new UserAlreadyExistsException("User already exist", existingUser.getEmail());
+        volunteer.setPassword(passwordEncoder.encode(volunteer.getPassword()));
         volunteer.setRole(Role.VOLUNTEER);
         return volunteerRepository.save(volunteer);
     }
@@ -36,19 +39,10 @@ public class VolunteerService {
         return volunteer;
     }
 
-    public Volunteer updateEmail(Long id, String email) {
-        Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("User not found." + id));
-        Volunteer userFoundThroughEmail = volunteerRepository.findByEmail(email).orElse(null);
-        if(userFoundThroughEmail!=null && !userFoundThroughEmail.isDeleted()) {
-            throw new UserAlreadyExistsException("Email already in use.", userFoundThroughEmail.getEmail());
-        }
-        volunteer.setEmail(email);
-        return volunteer;
-    }
 
     public void deleteVolunteer(Long id) {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete volunteer. Volunteer not found: " + id));
         volunteer.setDeleted(true);
-        volunteer.setEmail(volunteer.getEmail()+ id);
+        volunteer.setEmail("DELETED_"+volunteer.getEmail() + "_"+ LocalDateTime.now());
     }
 }

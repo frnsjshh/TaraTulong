@@ -16,6 +16,14 @@ public class VolunteerMapper {
         volunteer.setEmail(volunteerRequestDTO.email());
         volunteer.setFirstName(volunteerRequestDTO.firstName());
         volunteer.setLastName(volunteerRequestDTO.lastName());
+        volunteer.setPassword(volunteerRequestDTO.password());
+        return volunteer;
+    }
+
+    public static Volunteer toEntity(VolunteerRequestProfileDTO volunteerRequestProfileDTO) {
+        Volunteer volunteer = new Volunteer();
+        volunteer.setFirstName(volunteerRequestProfileDTO.firstName());
+        volunteer.setLastName(volunteerRequestProfileDTO.lastName());
         return volunteer;
     }
 }
