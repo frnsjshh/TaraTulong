@@ -51,7 +51,8 @@ public class SecurityConfig {
 
                         //Only volunteers can apply
                         .requestMatchers(HttpMethod.POST, "registrations/**").hasRole("VOLUNTEER")
-
+                        .requestMatchers(HttpMethod.DELETE, "registrations/**").hasRole("VOLUNTEER")
+                        .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
