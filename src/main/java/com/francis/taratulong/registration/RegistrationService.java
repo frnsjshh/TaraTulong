@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -109,8 +110,9 @@ public class RegistrationService {
 
     }
 
-    public void deleteRegistration(Long id) {
+    public void deleteRegistration(Long id, Long volunteerId) {
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()->new RegistrationNotFoundException("Cannot delete registration. Registration not found."));
+        if(!Objects.equals(volunteerId, registrationDb.getVolunteer().getId())) throw new UnauthorizedAccessException ("Cannot delete registration. Unauthorized");
         if(isApproved(registrationDb)){
             Event event = registrationDb.getEvent();
             event.setSlotsAvailable(event.getSlotsAvailable()+1);
