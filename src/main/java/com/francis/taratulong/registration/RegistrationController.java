@@ -1,6 +1,6 @@
 package com.francis.taratulong.registration;
 
-import com.francis.taratulong.registration.dto.RatingAndFeedbackRequestDTO;
+import com.francis.taratulong.registration.dto.RatingAndFeedbackRequestAndResponseDTO;
 import com.francis.taratulong.registration.dto.RegistrationMapper;
 import com.francis.taratulong.registration.dto.RegistrationRequestDTO;
 import com.francis.taratulong.registration.dto.RegistrationResponseDTO;
@@ -50,13 +50,13 @@ public class RegistrationController {
         return ResponseEntity.noContent().build();
     }
     @PatchMapping("/{id}/feedback")
-    public ResponseEntity<Void> setRegistrationFeedback(
+    public ResponseEntity<RatingAndFeedbackRequestAndResponseDTO> setRatingAndFeedback(
             @PathVariable Long id,
-            @RequestBody RatingAndFeedbackRequestDTO feedbackRequestDTO,
+            @RequestBody RatingAndFeedbackRequestAndResponseDTO feedbackRequestDTO,
             @AuthenticationPrincipal AppUser currentOrg
     ) {
-        registrationService.setRatingAndFeedback(id, feedbackRequestDTO.rating(), feedbackRequestDTO.feedback(), currentOrg.getId());
-        return ResponseEntity.noContent().build();
+        RatingAndFeedbackRequestAndResponseDTO response = RegistrationMapper.toRatingAndFeedbackDTO(registrationService.setRatingAndFeedback(id, feedbackRequestDTO.rating(), feedbackRequestDTO.feedback(), currentOrg.getId()));
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/status/approved")

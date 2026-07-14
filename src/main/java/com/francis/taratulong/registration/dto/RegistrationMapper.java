@@ -20,6 +20,13 @@ public final class RegistrationMapper {
         );
     }
 
+    public static RatingAndFeedbackRequestAndResponseDTO toRatingAndFeedbackDTO(Registration registration) {
+        if (registration.getFeedback()==null) registration.setFeedback("No feedback.");
+        return new RatingAndFeedbackRequestAndResponseDTO(
+                registration.getRating(),
+                registration.getFeedback()
+        );
+    }
     //No need for mapper for request DTO
 
 }
