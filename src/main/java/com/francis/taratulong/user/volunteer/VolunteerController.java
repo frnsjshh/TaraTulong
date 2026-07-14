@@ -1,5 +1,6 @@
 package com.francis.taratulong.user.volunteer;
 
+import com.francis.taratulong.user.AppUser;
 import com.francis.taratulong.user.dto.AppUserRequestEmailDTO;
 import com.francis.taratulong.user.dto.AppUserRequestPasswordDTO;
 import com.francis.taratulong.user.AppUserService;
@@ -8,6 +9,7 @@ import com.francis.taratulong.user.volunteer.dto.VolunteerRequestDTO;
 import com.francis.taratulong.user.volunteer.dto.VolunteerRequestProfileDTO;
 import com.francis.taratulong.user.volunteer.dto.VolunteerResponseDTO;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -27,29 +29,34 @@ public class VolunteerController {
                 volunteerService.saveVolunteer(VolunteerMapper.toEntity(volunteerRequestDTO)));
     }
 
-    @GetMapping("/{id}")
-    public VolunteerResponseDTO getUser(@PathVariable Long id) {
-        return VolunteerMapper.toResponseDTO(volunteerService.getVolunteer(id));
+    @GetMapping("/me")
+    public VolunteerResponseDTO getUser(
+            @AuthenticationPrincipal AppUser appUser
+            ) {
+        return VolunteerMapper.toResponseDTO(volunteerService.getVolunteer(appUser.getId()));
     }
 
-    @PutMapping("/{id}")
-    public VolunteerResponseDTO updateUser(@PathVariable Long id, @Valid@RequestBody VolunteerRequestProfileDTO volunteerRequestProfileDTO){
+    @PutMapping("/me")
+    public VolunteerResponseDTO updateUser(
+            @AuthenticationPrincipal AppUser appUser,
+            @Valid@RequestBody VolunteerRequestProfileDTO volunteerRequestProfileDTO
+    ){
         return VolunteerMapper.toResponseDTO(
-                volunteerService.updateVolunteer(id, VolunteerMapper.toEntity(volunteerRequestProfileDTO))
+                volunteerService.updateVolunteer(appUser.getId(), VolunteerMapper.toEntity(volunteerRequestProfileDTO))
         );
     }
-    @PatchMapping("/{id}/email")
-    public void updateEmail(@PathVariable Long id, @Valid@RequestBody AppUserRequestEmailDTO emailRequestDTO) {
-         appUserService.updateEmail(id, emailRequestDTO.email());
+    @PatchMapping("/me/email")
+    public void updateEmail(@AuthenticationPrincipal AppUser appUser, @Valid@RequestBody AppUserRequestEmailDTO emailRequestDTO) {
+         appUserService.updateEmail(appUser.getId(), emailRequestDTO.email());
     }
-    @PatchMapping("/{id}/password")
-    public void updatePassword(@PathVariable Long id, @Valid@RequestBody AppUserRequestPasswordDTO passwordRequestDTO) {
-        appUserService.updatePassword(id, passwordRequestDTO.currentPassword(), passwordRequestDTO.password());
+    @PatchMapping("/me/password")
+    public void updatePassword(@AuthenticationPrincipal AppUser appUser, @Valid@RequestBody AppUserRequestPasswordDTO passwordRequestDTO) {
+        appUserService.updatePassword(appUser.getId(), passwordRequestDTO.currentPassword(), passwordRequestDTO.password());
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
-        volunteerService.deleteVolunteer(id);
+    @DeleteMapping("/me")
+    public void deleteUser(@AuthenticationPrincipal AppUser appUser) {
+        volunteerService.deleteVolunteer(appUser.getId());
     }
 
 

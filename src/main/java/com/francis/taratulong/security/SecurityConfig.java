@@ -43,12 +43,12 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/volunteers").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/organizations").permitAll() // Added this!
+                        .requestMatchers(HttpMethod.POST, "/organizations").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/organizations").permitAll() //Anyone can view the org details
+
 
                         // --- PROTECTED ROUTES ---
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/volunteers/**").hasRole("VOLUNTEER")
-                        .requestMatchers("/organizations/**").hasRole("ORG") // Updated to plural!
 
                         // EVENTS
                         .requestMatchers(HttpMethod.POST, "/events/**").hasRole("ORG")
@@ -78,7 +78,6 @@ public class SecurityConfig {
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(customUserDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
-
         return authProvider;
     }
 
