@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter@Setter@NoArgsConstructor
+
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,6 +19,10 @@ public class Event {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizer_id")
     private Org organizer;
+
+    @Version
+    @Column(nullable = false)
+    private Integer version;
 
     @Column(nullable = false)
     private String title;

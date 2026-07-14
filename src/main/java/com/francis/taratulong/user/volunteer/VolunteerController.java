@@ -24,8 +24,7 @@ public class VolunteerController {
     @PostMapping
     public VolunteerResponseDTO saveUser(@Valid @RequestBody VolunteerRequestDTO volunteerRequestDTO) {
         return VolunteerMapper.toResponseDTO(
-                volunteerService.saveVolunteer(
-                        VolunteerMapper.toEntity(volunteerRequestDTO)));
+                volunteerService.saveVolunteer(VolunteerMapper.toEntity(volunteerRequestDTO)));
     }
 
     @GetMapping("/{id}")
