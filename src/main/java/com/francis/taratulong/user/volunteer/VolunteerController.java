@@ -1,7 +1,6 @@
 package com.francis.taratulong.user.volunteer;
 
 import com.francis.taratulong.user.AppUser;
-import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.volunteer.dto.VolunteerMapper;
 import com.francis.taratulong.user.volunteer.dto.VolunteerRequestDTO;
 import com.francis.taratulong.user.volunteer.dto.VolunteerRequestProfileDTO;
@@ -46,6 +45,5 @@ public class VolunteerController {
     public void deleteUser(@AuthenticationPrincipal AppUser appUser) {
         volunteerService.deleteVolunteer(appUser.getId());
     }
-
 
 }
