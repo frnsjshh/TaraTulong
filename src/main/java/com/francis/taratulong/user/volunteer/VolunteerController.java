@@ -1,8 +1,6 @@
 package com.francis.taratulong.user.volunteer;
 
 import com.francis.taratulong.user.AppUser;
-import com.francis.taratulong.user.dto.AppUserRequestEmailDTO;
-import com.francis.taratulong.user.dto.AppUserRequestPasswordDTO;
 import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.volunteer.dto.VolunteerMapper;
 import com.francis.taratulong.user.volunteer.dto.VolunteerRequestDTO;
@@ -17,10 +15,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/volunteers")
 public class VolunteerController {
     private final VolunteerService volunteerService;
-    private final AppUserService appUserService;
-    public VolunteerController(VolunteerService volunteerService, AppUserService appUserService) {
+    public VolunteerController(VolunteerService volunteerService) {
         this.volunteerService = volunteerService;
-        this.appUserService = appUserService;
     }
 
     @PostMapping
@@ -44,14 +40,6 @@ public class VolunteerController {
         return VolunteerMapper.toResponseDTO(
                 volunteerService.updateVolunteer(appUser.getId(), VolunteerMapper.toEntity(volunteerRequestProfileDTO))
         );
-    }
-    @PatchMapping("/me/email")
-    public void updateEmail(@AuthenticationPrincipal AppUser appUser, @Valid@RequestBody AppUserRequestEmailDTO emailRequestDTO) {
-         appUserService.updateEmail(appUser.getId(), emailRequestDTO.email());
-    }
-    @PatchMapping("/me/password")
-    public void updatePassword(@AuthenticationPrincipal AppUser appUser, @Valid@RequestBody AppUserRequestPasswordDTO passwordRequestDTO) {
-        appUserService.updatePassword(appUser.getId(), passwordRequestDTO.currentPassword(), passwordRequestDTO.password());
     }
 
     @DeleteMapping("/me")
