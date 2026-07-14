@@ -16,4 +16,10 @@ public final class AdminMapper {
         admin.setEmail(adminRequestDTO.email());
         return admin;
     }
+
+    public static Admin toEntity(AdminRequestUpdateProfile updateProfile) {
+        Admin admin = new Admin();
+        admin.setName(updateProfile.name());
+        return admin;
+    }
 }

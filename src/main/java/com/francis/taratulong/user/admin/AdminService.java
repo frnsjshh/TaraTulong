@@ -1,5 +1,6 @@
 package com.francis.taratulong.user.admin;
 
+import com.francis.taratulong.Status;
 import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
@@ -55,7 +56,12 @@ public class AdminService {
 
     public void approveOrg(Long adminID, Long orgID) {
         Org org = orgService.getOrg(orgID);
-        org.setStatus(com.francis.taratulong.Status.APPROVED);
+        org.setStatus(Status.APPROVED);
         org.setApprovedBy(getAdmin(adminID));
+    }
+
+    public void rejectOrg(Long orgID) {
+        Org org = orgService.getOrg(orgID);
+        org.setStatus(Status.REJECTED);
     }
 }

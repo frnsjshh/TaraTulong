@@ -1,11 +1,10 @@
 package com.francis.taratulong.user.admin;
 
-import com.francis.taratulong.user.admin.dto.AdminMapper;
-import com.francis.taratulong.user.admin.dto.AdminRequestDTO;
-import com.francis.taratulong.user.admin.dto.AdminResponseDTO;
-import com.francis.taratulong.user.admin.dto.AdminUpdateEmailRequestDTO;
+import com.francis.taratulong.user.AppUser;
+import com.francis.taratulong.user.admin.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,28 +18,45 @@ public class AdminController {
         return AdminMapper.toResponse(adminService.saveAdmin(AdminMapper.toEntity(requestDTO)));
     }
 
-    @GetMapping("/{id}")
-    public AdminResponseDTO getAdmin(@PathVariable Long id){
-        return AdminMapper.toResponse(adminService.getAdmin(id));
+    @GetMapping("/me")
+    public AdminResponseDTO getAdmin(@AuthenticationPrincipal AppUser appUser){
+        return AdminMapper.toResponse(adminService.getAdmin(appUser.getId()));
     }
 
-    @PutMapping("/{id}")
-    public AdminResponseDTO updateAdmin(@PathVariable Long id, @Valid@RequestBody AdminRequestDTO requestDTO) {
-        return AdminMapper.toResponse(adminService.updateAdmin(id, AdminMapper.toEntity(requestDTO)));
+    @PutMapping("/me")
+    public AdminResponseDTO updateAdmin(
+            @AuthenticationPrincipal AppUser appUser,
+            @Valid@RequestBody AdminRequestUpdateProfile requestDTO
+    ) {
+        return AdminMapper.toResponse(adminService.updateAdmin(appUser.getId(), AdminMapper.toEntity(requestDTO)));
     }
 
-    @PatchMapping("/{id}/email")
-    public AdminResponseDTO updateEmail(@PathVariable Long id, @Valid @RequestBody AdminUpdateEmailRequestDTO emailRequestDTO) {
-        return AdminMapper.toResponse(adminService.updateEmail(id, emailRequestDTO.email()));
+    @PatchMapping("/me/email")
+    public AdminResponseDTO updateEmail(
+            @AuthenticationPrincipal AppUser appUser,
+            @Valid @RequestBody AdminUpdateEmailRequestDTO emailRequestDTO
+    ) {
+        return AdminMapper.toResponse(adminService.updateEmail(appUser.getId(), emailRequestDTO.email()));
     }
 
-    @PatchMapping("/{id}/approve/{orgId}")
-    public void approveOrg(@PathVariable Long id, @PathVariable Long orgId){
-        adminService.approveOrg(id, orgId);
+    @PatchMapping("/me/approve/{orgId}")
+    public void approveOrg(
+            @AuthenticationPrincipal AppUser appUser,
+            @PathVariable Long orgId
+    ){
+        adminService.approveOrg(appUser.getId(), orgId);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteAdmin(@PathVariable Long id){
-        adminService.deleteAdmin(id);
+    @PatchMapping("/me/reject/{orgId}")
+    public void rejectOrg(
+            @PathVariable Long orgId
+    ){
+        adminService.rejectOrg(orgId);
+    }
+
+
+    @DeleteMapping("/me")
+    public void deleteAdmin(@AuthenticationPrincipal AppUser appUser){
+        adminService.deleteAdmin(appUser.getId());
     }
 }

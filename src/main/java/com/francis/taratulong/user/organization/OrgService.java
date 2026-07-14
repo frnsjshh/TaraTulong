@@ -43,6 +43,8 @@ public class OrgService {
             return org;
         }
     }
+
+
     public void deleteOrg(Long id) {
         Org org = orgRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete user. User not found"));
         org.setDeleted(true);
