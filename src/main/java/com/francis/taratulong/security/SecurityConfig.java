@@ -38,28 +38,30 @@ public class SecurityConfig {
                 // Disable CSRF because we are using stateless JWTs, not browser cookies
                 .csrf(csrf -> csrf.disable())
 
-                // Define exactly who can access what
                 .authorizeHttpRequests(auth -> auth
+                        // --- PUBLIC ROUTES ---
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/volunteers").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/organizations").permitAll() // Added this!
 
-                        //Protected Routes
-                        //EVENTS
+                        // --- PROTECTED ROUTES ---
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/volunteers/**").hasRole("VOLUNTEER")
+                        .requestMatchers("/organizations/**").hasRole("ORG") // Updated to plural!
+
+                        // EVENTS
                         .requestMatchers(HttpMethod.POST, "/events/**").hasRole("ORG")
                         .requestMatchers(HttpMethod.PUT, "/events/**").hasRole("ORG")
                         .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ORG")
 
-                        //Registration action for org
-                        .requestMatchers(HttpMethod.PATCH,"/registrations/**").hasRole("ORG")
-
-                        //Only volunteers can apply and delete registration
+                        // REGISTRATIONS
+                        .requestMatchers(HttpMethod.PATCH, "/registrations/**").hasRole("ORG")
                         .requestMatchers(HttpMethod.POST, "/registrations/**").hasRole("VOLUNTEER")
                         .requestMatchers(HttpMethod.DELETE, "/registrations/**").hasRole("VOLUNTEER")
 
-                        //Only admin can apply
-                        .requestMatchers("/admin").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        // CATCH-ALL
+                        .anyRequest().authenticated() // "Anyone else must be logged in"
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

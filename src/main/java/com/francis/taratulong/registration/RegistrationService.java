@@ -66,7 +66,7 @@ public class RegistrationService {
 
     }
 
-    public void setRatingAndFeedback(Long id, int rating, String feedback, Long orgId) {
+    public Registration setRatingAndFeedback(Long id, int rating, String feedback, Long orgId) {
         if(rating<1 || rating>5) {
             throw new RegistrationConflictException("Rating must be between 1 and 5.");
         }
@@ -75,7 +75,7 @@ public class RegistrationService {
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Cannot rate registration. Registration not approved.");
         registrationDb.setRating(rating);
         registrationDb.setFeedback(feedback==null || feedback.isBlank() ? "No feedback" : feedback);
-
+        return registrationDb;
     }
 
     public void setApproved(Long id, Long orgId){
