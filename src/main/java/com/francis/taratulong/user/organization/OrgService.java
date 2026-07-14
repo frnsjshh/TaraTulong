@@ -33,18 +33,6 @@ public class OrgService {
         return existingOrg;
     }
 
-    public Org updateEmail(Long id, String email) {
-        Org org = orgRepository.findById(id).orElseThrow(()-> new UserNotFoundException("User not found." + id));
-        Org userFoundThroughEmail = orgRepository.findByEmail(email).orElse(null);
-        if(userFoundThroughEmail!=null && !userFoundThroughEmail.isDeleted()) {
-            throw new UserAlreadyExistsException("Email already in use.", userFoundThroughEmail.getEmail());
-        } else {
-            org.setEmail(email);
-            return org;
-        }
-    }
-
-
     public void deleteOrg(Long id) {
         Org org = orgRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete user. User not found"));
         org.setDeleted(true);

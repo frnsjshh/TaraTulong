@@ -39,16 +39,6 @@ public class AdminService {
         return adminDB;
     }
 
-    public Admin updateEmail(Long id, String email) {
-        Admin admin = adminRepository.findById(id).orElseThrow(()-> new UserNotFoundException("User not found." + id));
-        Admin userFoundThroughEmail = adminRepository.findByEmail(email).orElse(null);
-        if(userFoundThroughEmail!=null && !userFoundThroughEmail.isDeleted()){
-            throw new UserAlreadyExistsException("Email already in use.", userFoundThroughEmail.getEmail());
-        } else {
-            admin.setEmail(email);
-            return admin;
-        }
-    }
     public void deleteAdmin(Long id) {
         Admin admin = adminRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete user. User not found."));
         admin.setDeleted(true);

@@ -31,14 +31,6 @@ public class AdminController {
         return AdminMapper.toResponse(adminService.updateAdmin(appUser.getId(), AdminMapper.toEntity(requestDTO)));
     }
 
-    @PatchMapping("/me/email")
-    public AdminResponseDTO updateEmail(
-            @AuthenticationPrincipal AppUser appUser,
-            @Valid @RequestBody AdminUpdateEmailRequestDTO emailRequestDTO
-    ) {
-        return AdminMapper.toResponse(adminService.updateEmail(appUser.getId(), emailRequestDTO.email()));
-    }
-
     @PatchMapping("/me/approve/{orgId}")
     public void approveOrg(
             @AuthenticationPrincipal AppUser appUser,
