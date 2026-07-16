@@ -46,25 +46,25 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         // --- PUBLIC ROUTES ---
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/volunteers").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/organizations").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/organizations").permitAll() //Anyone can view the org details
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/events/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/volunteers").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/organizations").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizations").permitAll() //Anyone can view the org details
 
 
                         // --- PROTECTED ROUTES ---
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // EVENTS
-                        .requestMatchers(HttpMethod.POST, "/events/**").hasRole("ORG")
-                        .requestMatchers(HttpMethod.PUT, "/events/**").hasRole("ORG")
-                        .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/events/**").hasRole("ORG")
 
                         // REGISTRATIONS
-                        .requestMatchers(HttpMethod.PATCH, "/registrations/**").hasRole("ORG")
-                        .requestMatchers(HttpMethod.POST, "/registrations/**").hasRole("VOLUNTEER")
-                        .requestMatchers(HttpMethod.DELETE, "/registrations/**").hasRole("VOLUNTEER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/registrations/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/registrations/**").hasRole("VOLUNTEER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/registrations/**").hasRole("VOLUNTEER")
 
                         // CATCH-ALL
                         .anyRequest().authenticated() // "Anyone else must be logged in"
