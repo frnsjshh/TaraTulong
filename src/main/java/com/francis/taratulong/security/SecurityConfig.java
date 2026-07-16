@@ -15,6 +15,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -35,30 +40,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http){
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // Disable CSRF because we are using stateless JWTs, not browser cookies
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
                         // --- PUBLIC ROUTES ---
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/volunteers").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/organizations").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/organizations").permitAll() //Anyone can view the org details
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/events/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/volunteers").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/organizations").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/organizations").permitAll() //Anyone can view the org details
 
 
                         // --- PROTECTED ROUTES ---
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // EVENTS
-                        .requestMatchers(HttpMethod.POST, "/events/**").hasRole("ORG")
-                        .requestMatchers(HttpMethod.PUT, "/events/**").hasRole("ORG")
-                        .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/events/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/events/**").hasRole("ORG")
 
                         // REGISTRATIONS
-                        .requestMatchers(HttpMethod.PATCH, "/registrations/**").hasRole("ORG")
-                        .requestMatchers(HttpMethod.POST, "/registrations/**").hasRole("VOLUNTEER")
-                        .requestMatchers(HttpMethod.DELETE, "/registrations/**").hasRole("VOLUNTEER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/registrations/**").hasRole("ORG")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/registrations/**").hasRole("VOLUNTEER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/registrations/**").hasRole("VOLUNTEER")
 
                         // CATCH-ALL
                         .anyRequest().authenticated() // "Anyone else must be logged in"
@@ -81,8 +87,25 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    @Bean public AuthenticationManager authenticationManager(AuthenticationConfiguration config){
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config){
         return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3000"
+        ));
+
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
     }
 
 }

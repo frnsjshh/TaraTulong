@@ -1,7 +1,7 @@
 package com.francis.taratulong.security;
 
-import com.francis.taratulong.security.dto.AuthResponse;
-import com.francis.taratulong.security.dto.LoginRequest;
+import com.francis.taratulong.security.v1.dto.AuthResponse;
+import com.francis.taratulong.security.v1.dto.LoginRequest;
 import com.francis.taratulong.user.AppUser;
 import com.francis.taratulong.user.AppUserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
