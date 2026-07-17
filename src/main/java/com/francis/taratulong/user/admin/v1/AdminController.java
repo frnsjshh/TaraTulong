@@ -18,18 +18,19 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AdminController {
     private final AdminService adminService;
+    private final AdminMapper adminMapper;
 
     @PostMapping
     public ResponseEntity<AdminResponseDTO> saveAdmin(@Valid@RequestBody AdminRequestDTO requestDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                AdminMapper.toResponse(adminService.saveAdmin(AdminMapper.toEntity(requestDTO)))
+                adminMapper.toResponse(adminService.saveAdmin(adminMapper.toEntity(requestDTO)))
         );
     }
 
     @GetMapping("/me")
     public ResponseEntity<AdminResponseDTO> getAdmin(@AuthenticationPrincipal AppUser appUser){
         return ResponseEntity.ok(
-                AdminMapper.toResponse(adminService.getAdmin(appUser.getId()))
+                adminMapper.toResponse(adminService.getAdmin(appUser.getId()))
         );
     }
 
@@ -39,7 +40,7 @@ public class AdminController {
             @Valid@RequestBody AdminRequestUpdateProfile requestDTO
     ) {
         return ResponseEntity.ok(
-                AdminMapper.toResponse(adminService.updateAdmin(appUser.getId(), AdminMapper.toEntity(requestDTO)))
+                adminMapper.toResponse(adminService.updateAdmin(appUser.getId(), adminMapper.toEntity(requestDTO)))
         );
     }
 

@@ -12,7 +12,8 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@Getter@Setter@NoArgsConstructor
+@Getter@Setter
+@NoArgsConstructor
 public class Org extends AppUser {
 
     @Column(nullable = false)

@@ -1,25 +1,13 @@
 package com.francis.taratulong.user.admin.v1.dto;
 
+
 import com.francis.taratulong.user.admin.Admin;
+import org.mapstruct.Mapper;
 
-public final class AdminMapper {
-    public static AdminResponseDTO toResponse(Admin admin){
-        return new AdminResponseDTO(
-                admin.getEmail(),
-                admin.getName()
-        );
-    }
+@Mapper(componentModel = "spring")
+public interface AdminMapper {
+    AdminResponseDTO toResponse(Admin admin);
+    Admin toEntity(AdminRequestDTO eventRequestDTO);
+    Admin toEntity(AdminRequestUpdateProfile updateProfile);
 
-    public static Admin toEntity(AdminRequestDTO adminRequestDTO) {
-        Admin admin = new Admin();
-        admin.setName(adminRequestDTO.name());
-        admin.setEmail(adminRequestDTO.email());
-        return admin;
-    }
-
-    public static Admin toEntity(AdminRequestUpdateProfile updateProfile) {
-        Admin admin = new Admin();
-        admin.setName(updateProfile.name());
-        return admin;
-    }
 }
