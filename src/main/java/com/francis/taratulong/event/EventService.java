@@ -56,6 +56,9 @@ public class EventService {
     public Page<Event> getAllEvents(int page, int size) {
             Pageable pageable = PageRequest.of(page, size, Sort.by("startDateTime").descending());
             return eventRepository.findAll(pageable);
+    }
 
+    public Long getOrganizer(Long eventId) {
+        return getEvent(eventId).getOrganizer().getId();
     }
 }

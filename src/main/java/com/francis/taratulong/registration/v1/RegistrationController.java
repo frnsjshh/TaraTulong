@@ -1,5 +1,6 @@
 package com.francis.taratulong.registration.v1;
 
+import com.francis.taratulong.registration.Registration;
 import com.francis.taratulong.registration.RegistrationService;
 import com.francis.taratulong.registration.v1.dto.RatingAndFeedbackRequestAndResponseDTO;
 import com.francis.taratulong.registration.v1.dto.RegistrationMapper;
@@ -8,6 +9,10 @@ import com.francis.taratulong.registration.v1.dto.RegistrationResponseDTO;
 import com.francis.taratulong.user.AppUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,6 +36,16 @@ public class RegistrationController {
     public ResponseEntity<RegistrationResponseDTO> getRegistration(@PathVariable Long id){
         RegistrationResponseDTO response = RegistrationMapper.toResponseDTO(registrationService.getRegistration(id));
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/events/{eventId}")
+    public ResponseEntity<Page<RegistrationResponseDTO>> getRegistrationsForEvent(
+            @PathVariable Long eventId,
+            @AuthenticationPrincipal AppUser appUser,
+            @PageableDefault(size = 20, sort = "appliedAt", direction = Sort.Direction.DESC)Pageable pageable
+            ) {
+        Page<Registration> registrationPage = registrationService.getRegistrationsForEvent(eventId, appUser.getId(),pageable);
+        return ResponseEntity.ok(registrationPage.map(RegistrationMapper::toResponseDTO));
     }
 
     @PatchMapping("/{id}/present")
