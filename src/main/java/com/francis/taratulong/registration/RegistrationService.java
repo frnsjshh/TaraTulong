@@ -6,6 +6,9 @@ import com.francis.taratulong.event.EventService;
 import com.francis.taratulong.exception.*;
 import com.francis.taratulong.user.volunteer.VolunteerService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,17 +16,12 @@ import java.util.Objects;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class RegistrationService {
     private final RegistrationRepository registrationRepository;
     private final VolunteerService volunteerService;
     private final EventService eventService;
 
-
-    public RegistrationService(RegistrationRepository registrationRepository, VolunteerService volunteerService, EventService eventService) {
-        this.registrationRepository = registrationRepository;
-        this.volunteerService = volunteerService;
-        this.eventService = eventService;
-    }
 
     public Registration saveRegistration(Long volunteerId, Long eventId) {
         Registration registration = new Registration();
@@ -46,10 +44,15 @@ public class RegistrationService {
         return registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Registration not found."));
     }
 
+    public Page<Registration> getRegistrationsForEvent(Long eventId, Long ordId, Pageable pageable) {
+        verifyOrgOwnershipToEvent(ordId, eventId);
+        return registrationRepository.findAllByEventIdWithDetails(eventId, pageable);
+    }
+
 
     public void setPresent(Long id, Long orgId) {
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
-        verifyOrgOwnership(registrationDb, orgId);
+        verifyOrgOwnershipToRegistration(registrationDb, orgId);
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Action denied: Attendance requires an approved registration status.");
         registrationDb.setParticipated(true);
 
@@ -58,7 +61,7 @@ public class RegistrationService {
 
     public void setNotPresent(Long id, Long orgId) {
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
-        verifyOrgOwnership(registrationDb, orgId);
+        verifyOrgOwnershipToRegistration(registrationDb, orgId);
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Action denied: Attendance requires an approved registration status.");
         registrationDb.setParticipated(false);
 
@@ -71,7 +74,7 @@ public class RegistrationService {
             throw new RegistrationConflictException("Rating must be between 1 and 5.");
         }
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set rating. Registration not found."));
-        verifyOrgOwnership(registrationDb, orgId);
+        verifyOrgOwnershipToRegistration(registrationDb, orgId);
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Cannot rate registration. Registration not approved.");
         registrationDb.setRating(rating);
         registrationDb.setFeedback(feedback==null || feedback.isBlank() ? "No feedback" : feedback);
@@ -81,7 +84,7 @@ public class RegistrationService {
     public void setApproved(Long id, Long orgId){
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot approve registration. Registration not found."));
         Event event = registrationDb.getEvent();
-        verifyOrgOwnership(registrationDb, orgId);
+        verifyOrgOwnershipToRegistration(registrationDb, orgId);
 
         if(isApproved(registrationDb)){
             throw new RegistrationConflictException("Registration already approved.");
@@ -95,7 +98,7 @@ public class RegistrationService {
 
     public void setRejected(Long id, Long orgId){
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
-        verifyOrgOwnership(registrationDb, orgId);
+        verifyOrgOwnershipToRegistration(registrationDb, orgId);
 
         if(isRejected(registrationDb)){
             throw new RegistrationConflictException("Registration already rejected.");
@@ -121,10 +124,15 @@ public class RegistrationService {
     }
 
 
-    private void verifyOrgOwnership(Registration registration, Long orgId) {
+    private void verifyOrgOwnershipToRegistration(Registration registration, Long orgId) {
         if (!registration.getEvent().getOrganizer().getId().equals(orgId)) {
             throw new UnauthorizedAccessException("Unauthorized action for this event.");
         }
+    }
+
+    private void verifyOrgOwnershipToEvent(Long orgId, Long eventId) {
+        if(eventService.getOrganizer(eventId).equals(orgId))
+            throw new UnauthorizedAccessException("Unauthorized");
     }
 
     private boolean isApproved(Registration registration) {

@@ -16,16 +16,23 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter@Setter@NoArgsConstructor
+@Table(
+        name = "registration",
+        indexes = {
+                @Index(name = "idx_registration_event", columnList = "event_id"),
+                @Index(name = "idx_registration_volunteer", columnList = "volunteer_id")
+        }
+)
 public class Registration {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "volunteer_id")
     private Volunteer volunteer;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 

@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Getter@Setter@NoArgsConstructor
+@Getter@Setter
+@NoArgsConstructor
 @Table(name="app_users")
 @Inheritance(strategy = InheritanceType.JOINED)
 @SQLRestriction("deleted=false")

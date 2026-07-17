@@ -5,22 +5,23 @@ import com.francis.taratulong.user.organization.v1.dto.OrgMapper;
 import com.francis.taratulong.user.organization.v1.dto.OrgRequestDTO;
 import com.francis.taratulong.user.organization.v1.dto.OrgResponseDTO;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("api/v1/orgs")
+@RequiredArgsConstructor
 public class OrgController {
     private final OrgService orgService;
+    private final OrgMapper orgMapper;
 
-    public OrgController(OrgService orgService) {
-        this.orgService = orgService;
-    }
+
     @PostMapping
     public ResponseEntity<OrgResponseDTO> saveOrg(@Valid @RequestBody OrgRequestDTO requestDTO) {
-        OrgResponseDTO response = OrgMapper.toResponse(
-                orgService.saveOrg(OrgMapper.toEntity(requestDTO))
+        OrgResponseDTO response = orgMapper.toResponse(
+                orgService.saveOrg(orgMapper.toEntity(requestDTO))
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -28,7 +29,7 @@ public class OrgController {
 
     @GetMapping("/{id}")
     public ResponseEntity<OrgResponseDTO> getOrg(@PathVariable Long id) {
-        OrgResponseDTO response = OrgMapper.toResponse(orgService.getOrg(id));
+        OrgResponseDTO response = orgMapper.toResponse(orgService.getOrg(id));
 
         return ResponseEntity.ok(response);
     }
@@ -38,8 +39,8 @@ public class OrgController {
             @PathVariable Long id,
             @Valid @RequestBody OrgRequestDTO orgRequestDTO
     ) {
-        OrgResponseDTO response = OrgMapper.toResponse(
-                orgService.updateOrg(id, OrgMapper.toEntity(orgRequestDTO))
+        OrgResponseDTO response = orgMapper.toResponse(
+                orgService.updateOrg(id, orgMapper.toEntity(orgRequestDTO))
         );
 
         return ResponseEntity.ok(response);

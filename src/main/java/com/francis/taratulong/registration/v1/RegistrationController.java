@@ -1,5 +1,6 @@
 package com.francis.taratulong.registration.v1;
 
+import com.francis.taratulong.registration.Registration;
 import com.francis.taratulong.registration.RegistrationService;
 import com.francis.taratulong.registration.v1.dto.RatingAndFeedbackRequestAndResponseDTO;
 import com.francis.taratulong.registration.v1.dto.RegistrationMapper;
@@ -8,6 +9,10 @@ import com.francis.taratulong.registration.v1.dto.RegistrationResponseDTO;
 import com.francis.taratulong.user.AppUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,19 +23,30 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RegistrationController {
     private final RegistrationService registrationService;
+    private final RegistrationMapper registrationMapper;
 
     @PostMapping
     public ResponseEntity<RegistrationResponseDTO> createRegistration(
             @Valid @RequestBody RegistrationRequestDTO requestDTO,
             @AuthenticationPrincipal AppUser currentVolunteer){
-        RegistrationResponseDTO response = RegistrationMapper.toResponseDTO(registrationService.saveRegistration(currentVolunteer.getId(), requestDTO.eventId()));
+        RegistrationResponseDTO response = registrationMapper.toResponseDTO(registrationService.saveRegistration(currentVolunteer.getId(), requestDTO.eventId()));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RegistrationResponseDTO> getRegistration(@PathVariable Long id){
-        RegistrationResponseDTO response = RegistrationMapper.toResponseDTO(registrationService.getRegistration(id));
+        RegistrationResponseDTO response = registrationMapper.toResponseDTO(registrationService.getRegistration(id));
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/events/{eventId}")
+    public ResponseEntity<Page<RegistrationResponseDTO>> getRegistrationsForEvent(
+            @PathVariable Long eventId,
+            @AuthenticationPrincipal AppUser appUser,
+            @PageableDefault(size = 20, sort = "appliedAt", direction = Sort.Direction.DESC)Pageable pageable
+            ) {
+        Page<Registration> registrationPage = registrationService.getRegistrationsForEvent(eventId, appUser.getId(),pageable);
+        return ResponseEntity.ok(registrationPage.map(registrationMapper::toResponseDTO));
     }
 
     @PatchMapping("/{id}/present")
@@ -56,7 +72,7 @@ public class RegistrationController {
             @RequestBody RatingAndFeedbackRequestAndResponseDTO feedbackRequestDTO,
             @AuthenticationPrincipal AppUser currentOrg
     ) {
-        RatingAndFeedbackRequestAndResponseDTO response = RegistrationMapper.toRatingAndFeedbackDTO(registrationService.setRatingAndFeedback(id, feedbackRequestDTO.rating(), feedbackRequestDTO.feedback(), currentOrg.getId()));
+        RatingAndFeedbackRequestAndResponseDTO response = registrationMapper.toRatingAndFeedbackDTO(registrationService.setRatingAndFeedback(id, feedbackRequestDTO.rating(), feedbackRequestDTO.feedback(), currentOrg.getId()));
         return ResponseEntity.ok(response);
     }
 

@@ -1,29 +1,15 @@
 package com.francis.taratulong.user.volunteer.v1.dto;
 
 import com.francis.taratulong.user.volunteer.Volunteer;
+import org.mapstruct.Mapper;
 
-public class VolunteerMapper {
-    public static VolunteerResponseDTO toResponseDTO(Volunteer volunteer) {
-        return new VolunteerResponseDTO(
-                volunteer.getEmail(),
-                volunteer.getFirstName(),
-                volunteer.getLastName()
-        );
-    }
+@Mapper(componentModel = "spring")
+public interface VolunteerMapper {
+    VolunteerResponseDTO toResponseDTO(Volunteer volunteer);
 
-    public static Volunteer toEntity(VolunteerRequestDTO volunteerRequestDTO) {
-        Volunteer volunteer = new Volunteer();
-        volunteer.setEmail(volunteerRequestDTO.email());
-        volunteer.setFirstName(volunteerRequestDTO.firstName());
-        volunteer.setLastName(volunteerRequestDTO.lastName());
-        volunteer.setPassword(volunteerRequestDTO.password());
-        return volunteer;
-    }
+    Volunteer toEntity(VolunteerRequestDTO volunteerRequestDTO);
 
-    public static Volunteer toEntity(VolunteerRequestProfileDTO volunteerRequestProfileDTO) {
-        Volunteer volunteer = new Volunteer();
-        volunteer.setFirstName(volunteerRequestProfileDTO.firstName());
-        volunteer.setLastName(volunteerRequestProfileDTO.lastName());
-        return volunteer;
-    }
+    Volunteer toEntity(VolunteerRequestProfileDTO volunteerRequestProfileDTO);
+
+
 }
