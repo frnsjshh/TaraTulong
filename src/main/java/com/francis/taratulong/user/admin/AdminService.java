@@ -6,19 +6,16 @@ import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AdminService {
     private final AdminRepository adminRepository;
     private final OrgService orgService;
-
-    public AdminService(AdminRepository adminRepository, OrgService orgService) {
-        this.orgService = orgService;
-        this.adminRepository = adminRepository;
-    }
 
     public Admin saveAdmin(Admin admin){
         Admin adminDB = adminRepository.findByEmail(admin.getEmail()).orElse(null);

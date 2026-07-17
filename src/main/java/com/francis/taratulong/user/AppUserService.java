@@ -3,21 +3,16 @@ package com.francis.taratulong.user;
 import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AppUserService {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
-
-
-    public AppUserService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder) {
-
-        this.appUserRepository = appUserRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     public void updateEmail(Long id, String email) {
         AppUser appUser = appUserRepository.findById(id).orElseThrow(()->new UserNotFoundException("Cannot update email. User not found"));

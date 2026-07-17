@@ -6,6 +6,7 @@ import com.francis.taratulong.event.EventService;
 import com.francis.taratulong.exception.*;
 import com.francis.taratulong.user.volunteer.VolunteerService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,17 +16,12 @@ import java.util.Objects;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class RegistrationService {
     private final RegistrationRepository registrationRepository;
     private final VolunteerService volunteerService;
     private final EventService eventService;
 
-
-    public RegistrationService(RegistrationRepository registrationRepository, VolunteerService volunteerService, EventService eventService) {
-        this.registrationRepository = registrationRepository;
-        this.volunteerService = volunteerService;
-        this.eventService = eventService;
-    }
 
     public Registration saveRegistration(Long volunteerId, Long eventId) {
         Registration registration = new Registration();

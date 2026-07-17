@@ -5,20 +5,17 @@ import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class VolunteerService {
     private final VolunteerRepository volunteerRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public VolunteerService(VolunteerRepository volunteerRepository, PasswordEncoder passwordEncoder) {
-        this.volunteerRepository = volunteerRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     public Volunteer saveVolunteer(Volunteer volunteer) {
         Volunteer existingUser = volunteerRepository.findByEmail(volunteer.getEmail()).orElse(null);

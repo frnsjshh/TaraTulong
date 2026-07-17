@@ -4,15 +4,14 @@ import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class OrgService {
     private final OrgRepository orgRepository;
-    public OrgService(OrgRepository orgRepository) {
-        this.orgRepository = orgRepository;
-    }
 
     public Org saveOrg(Org org) {
         Org dbFound = orgRepository.findByEmail(org.getEmail()).orElse(null);

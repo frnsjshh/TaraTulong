@@ -5,6 +5,7 @@ import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,13 +14,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EventService {
     private final EventRepository eventRepository;
     private final OrgRepository orgRepository;
-    public EventService(EventRepository eventRepository, OrgRepository orgRepository) {
-        this.orgRepository = orgRepository;
-        this.eventRepository = eventRepository;
-    }
+
 
     public Event saveEvent(Long orgId, Event event) {
         Org org = orgRepository.findById(orgId).orElseThrow(()->new UserNotFoundException("Cannot create event. Organization not found."));
