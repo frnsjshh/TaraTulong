@@ -1,32 +1,14 @@
 package com.francis.taratulong.registration.v1.dto;
 
 import com.francis.taratulong.registration.Registration;
+import org.mapstruct.Mapper;
 
-public final class RegistrationMapper {
 
-    RegistrationMapper() {
-        throw new IllegalStateException("Utility class");
-    }
+@Mapper(componentModel = "spring")
+public interface RegistrationMapper {
 
-    public static RegistrationResponseDTO toResponseDTO(Registration registration) {
-        return new RegistrationResponseDTO(
-                registration.getId(),
-                registration.getVolunteer().getId(),
-                registration.getEvent().getId(),
-                registration.getRegistrationStatus(),
-                registration.getParticipated(),
-                registration.getRating(),
-                registration.getFeedback()
-        );
-    }
+    RegistrationResponseDTO toResponseDTO(Registration registration);
 
-    public static RatingAndFeedbackRequestAndResponseDTO toRatingAndFeedbackDTO(Registration registration) {
-        if (registration.getFeedback()==null) registration.setFeedback("No feedback.");
-        return new RatingAndFeedbackRequestAndResponseDTO(
-                registration.getRating(),
-                registration.getFeedback()
-        );
-    }
-    //No need for mapper for request DTO
+    RatingAndFeedbackRequestAndResponseDTO toRatingAndFeedbackDTO(Registration registration);
 
 }
