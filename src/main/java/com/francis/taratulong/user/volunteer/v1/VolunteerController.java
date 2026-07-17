@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/volunteers")
+@RequestMapping("api/v1/volunteers")
 public class VolunteerController {
     private final VolunteerService volunteerService;
     public VolunteerController(VolunteerService volunteerService) {

@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 @RestController
-@RequestMapping("/orgs")
+@RequestMapping("api/v1/orgs")
 public class OrgController {
     private final OrgService orgService;
 
