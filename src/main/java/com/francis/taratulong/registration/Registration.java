@@ -16,6 +16,13 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter@Setter@NoArgsConstructor
+@Table(
+        name = "registration",
+        indexes = {
+                @Index(name = "idx_registration_event", columnList = "event_id"),
+                @Index(name = "idx_registration_volunteer", columnList = "volunteer_id")
+        }
+)
 public class Registration {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
