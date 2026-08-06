@@ -37,6 +37,18 @@ public class VolunteerService {
     }
 
 
+    public void addOneEventsAttended(Long id) {
+        Volunteer volunteer = getVolunteer(id);
+        volunteer.setTotalEventsAttended(volunteer.getTotalEventsAttended() + 1);
+    }
+
+    public void addOneTotalRegistrations(Long id) {
+        Volunteer volunteer = getVolunteer(id);
+        volunteer.setTotalApprovedRegistrations(volunteer.getTotalApprovedRegistrations() + 1);
+    }
+
+
+
     public void deleteVolunteer(Long id) {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete volunteer. Volunteer not found: " + id));
         volunteer.setDeleted(true);

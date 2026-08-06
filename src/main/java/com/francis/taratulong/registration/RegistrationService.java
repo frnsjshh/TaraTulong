@@ -55,7 +55,8 @@ public class RegistrationService {
         verifyOrgOwnershipToRegistration(registrationDb, orgId);
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Action denied: Attendance requires an approved registration status.");
         registrationDb.setParticipated(true);
-
+        volunteerService.addOneEventsAttended(registrationDb.getVolunteer().getId()); //adding 1 to volunteer's total events attended'
+        volunteerService.addOneTotalRegistrations(registrationDb.getVolunteer().getId()); //adding 1 to volunteer's total registrations'
 
     }
 
@@ -64,9 +65,7 @@ public class RegistrationService {
         verifyOrgOwnershipToRegistration(registrationDb, orgId);
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Action denied: Attendance requires an approved registration status.");
         registrationDb.setParticipated(false);
-
-
-
+        volunteerService.addOneTotalRegistrations(registrationDb.getVolunteer().getId()); //only adding 1 to volunteer's total registrations' not including the volunteer's total events attended'
     }
 
     public Registration setRatingAndFeedback(Long id, int rating, String feedback, Long orgId) {
