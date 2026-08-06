@@ -4,12 +4,14 @@ import com.francis.taratulong.user.organization.OrgService;
 import com.francis.taratulong.user.organization.v1.dto.OrgMapper;
 import com.francis.taratulong.user.organization.v1.dto.OrgRequestDTO;
 import com.francis.taratulong.user.organization.v1.dto.OrgResponseDTO;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+@Tag(name = "Organization")
 @RestController
 @RequestMapping("api/v1/orgs")
 @RequiredArgsConstructor

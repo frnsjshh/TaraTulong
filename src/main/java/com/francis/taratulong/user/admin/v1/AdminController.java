@@ -6,6 +6,7 @@ import com.francis.taratulong.user.admin.v1.dto.AdminMapper;
 import com.francis.taratulong.user.admin.v1.dto.AdminRequestDTO;
 import com.francis.taratulong.user.admin.v1.dto.AdminRequestUpdateProfile;
 import com.francis.taratulong.user.admin.v1.dto.AdminResponseDTO;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Admin")
 @RestController
 @RequestMapping("api/v1/admin")
 @RequiredArgsConstructor

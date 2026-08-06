@@ -6,6 +6,7 @@ import com.francis.taratulong.event.v1.dto.EventMapper;
 import com.francis.taratulong.event.v1.dto.EventRequestDTO;
 import com.francis.taratulong.event.v1.dto.EventResponseDTO;
 import com.francis.taratulong.user.AppUser;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Event")
 @RestController
 @RequestMapping("api/v1/events")
 @RequiredArgsConstructor

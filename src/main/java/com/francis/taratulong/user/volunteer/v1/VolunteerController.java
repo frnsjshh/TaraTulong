@@ -6,6 +6,7 @@ import com.francis.taratulong.user.volunteer.v1.dto.VolunteerMapper;
 import com.francis.taratulong.user.volunteer.v1.dto.VolunteerRequestDTO;
 import com.francis.taratulong.user.volunteer.v1.dto.VolunteerRequestProfileDTO;
 import com.francis.taratulong.user.volunteer.v1.dto.VolunteerResponseDTO;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
+@Tag(name = "Volunteer")
 @RestController
 @RequestMapping("api/v1/volunteers")
 @RequiredArgsConstructor
