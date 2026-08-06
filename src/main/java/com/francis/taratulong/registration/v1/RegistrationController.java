@@ -7,6 +7,7 @@ import com.francis.taratulong.registration.v1.dto.RegistrationMapper;
 import com.francis.taratulong.registration.v1.dto.RegistrationRequestDTO;
 import com.francis.taratulong.registration.v1.dto.RegistrationResponseDTO;
 import com.francis.taratulong.user.AppUser;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Registration")
 @RestController
 @RequestMapping("api/v1/registrations")
 @RequiredArgsConstructor

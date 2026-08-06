@@ -5,6 +5,7 @@ import com.francis.taratulong.user.AppUser;
 import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.v1.dto.AppUserRequestPasswordDTO;
 import com.francis.taratulong.user.v1.dto.AppUserRequestEmailDTO;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "User")
 @RestController
 @RequestMapping("/user")
 public class AppUserController {

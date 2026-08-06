@@ -54,19 +54,37 @@ public class RegistrationService {
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
         verifyOrgOwnershipToRegistration(registrationDb, orgId);
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Action denied: Attendance requires an approved registration status.");
+
+        //check if attendance is already marked as present
+        if(Boolean.TRUE.equals(registrationDb.getParticipated())) throw new RegistrationConflictException("Action denied: Registration already marked as present.");
+
+
+        if(registrationDb.getParticipated()==null) {
+            volunteerService.updateEventsAttended(registrationDb.getVolunteer().getId(), 1); //adding 1 to volunteer's total events attended'
+            volunteerService.updateTotalRegistrations(registrationDb.getVolunteer().getId(), 1); //adding 1 to volunteer's total registrations'
+        } else {
+            volunteerService.updateEventsAttended(registrationDb.getVolunteer().getId(), 1);
+        }
+
         registrationDb.setParticipated(true);
-
-
     }
 
     public void setNotPresent(Long id, Long orgId) {
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
         verifyOrgOwnershipToRegistration(registrationDb, orgId);
+
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Action denied: Attendance requires an approved registration status.");
+
+        //check if attendance is already marked as not present
+        if(Boolean.FALSE.equals(registrationDb.getParticipated())) throw new RegistrationConflictException("Action denied: Registration already marked as not present.");
+
+        if(registrationDb.getParticipated()==null) {
+            volunteerService.updateTotalRegistrations(registrationDb.getVolunteer().getId(), 1);
+            //not adding 1 to volunteer's total events attended, volunteers absent
+        } else {
+            volunteerService.updateEventsAttended(registrationDb.getVolunteer().getId(), -1);
+        }
         registrationDb.setParticipated(false);
-
-
-
     }
 
     public Registration setRatingAndFeedback(Long id, int rating, String feedback, Long orgId) {
@@ -131,7 +149,7 @@ public class RegistrationService {
     }
 
     private void verifyOrgOwnershipToEvent(Long orgId, Long eventId) {
-        if(eventService.getOrganizer(eventId).equals(orgId))
+        if(!eventService.getOrganizer(eventId).equals(orgId))
             throw new UnauthorizedAccessException("Unauthorized");
     }
 

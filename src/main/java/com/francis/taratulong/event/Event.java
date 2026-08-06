@@ -5,11 +5,13 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter@Setter@NoArgsConstructor
+@SQLRestriction("deleted=false")
 
 public class Event {
     @Id
