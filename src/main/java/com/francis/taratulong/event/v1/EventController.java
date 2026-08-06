@@ -5,11 +5,13 @@ import com.francis.taratulong.event.EventService;
 import com.francis.taratulong.event.v1.dto.EventMapper;
 import com.francis.taratulong.event.v1.dto.EventRequestDTO;
 import com.francis.taratulong.event.v1.dto.EventResponseDTO;
+import com.francis.taratulong.user.AppUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,9 +22,11 @@ public class EventController {
     private final EventMapper eventMapper;
 
     @PostMapping
-    public ResponseEntity<EventResponseDTO> createEvent(@Valid @RequestBody EventRequestDTO requestDTO) {
+    public ResponseEntity<EventResponseDTO> createEvent(
+            @Valid @RequestBody EventRequestDTO requestDTO,
+            @AuthenticationPrincipal AppUser currentOrg) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                eventMapper.toResponseDTO(eventService.saveEvent(requestDTO.organizerId(), eventMapper.toEntity(requestDTO)))
+                eventMapper.toResponseDTO(eventService.saveEvent(currentOrg.getId(), eventMapper.toEntity(requestDTO)))
         );
     }
     @GetMapping
@@ -50,13 +54,19 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EventResponseDTO> updateEvent(@PathVariable Long id, @Valid@RequestBody EventRequestDTO requestDTO){
-        return ResponseEntity.ok(eventMapper.toResponseDTO(eventService.updateEvent(id, eventMapper.toEntity(requestDTO))));
+    public ResponseEntity<EventResponseDTO> updateEvent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentOrg,
+            @Valid@RequestBody EventRequestDTO requestDTO){
+        return ResponseEntity.ok(eventMapper.toResponseDTO(eventService.updateEvent(id, currentOrg.getId(), eventMapper.toEntity(requestDTO))));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
-        eventService.deleteEvent(id);
+    public ResponseEntity<Void> deleteEvent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentOrg
+    ) {
+        eventService.deleteEvent(id, currentOrg.getId());
         return ResponseEntity.noContent().build();
     }
 

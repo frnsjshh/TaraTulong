@@ -6,8 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record EventRequestDTO(
-        @NotNull(message = "Organizer required")
-        Long organizerId,
+
         @NotBlank (message = "Title required")
         String title,
         @NotBlank (message = "Description required")

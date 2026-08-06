@@ -30,8 +30,9 @@ public class EventService {
         return eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Event not found"));
     }
 
-    public Event updateEvent(Long id, Event event){
+    public Event updateEvent(Long id, Long orgId, Event event){
         Event eventDB = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Cannot update event. Event not found."));
+        if(!eventDB.getOrganizer().getId().equals(orgId)) throw new UserNotFoundException("Cannot update event. Unauthorized");
         eventDB.setTitle(event.getTitle());
         eventDB.setDescription(event.getDescription());
         eventDB.setStartDateTime(event.getStartDateTime());
@@ -42,8 +43,9 @@ public class EventService {
         return eventDB;
     }
 
-    public void deleteEvent(Long id) {
+    public void deleteEvent(Long id, Long orgId) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Cannot delete event. Event not found."));
+        if(!event.getOrganizer().getId().equals(orgId)) throw new UserNotFoundException("Cannot delete event. Unauthorized");
         event.setDeleted(true);
     }
 
