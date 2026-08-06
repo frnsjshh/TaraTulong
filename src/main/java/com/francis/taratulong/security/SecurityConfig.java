@@ -52,6 +52,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/organizations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/organizations/**").permitAll() //Anyone can view the org details
 
+                        // --- SWAGGER / OPENAPI DOCS ---
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
 
                         // --- PROTECTED ROUTES ---
                         .requestMatchers("/admin/**").hasRole("ADMIN")
