@@ -40,8 +40,8 @@ public class Registration {
     @Column(nullable = false)
     private Status registrationStatus = Status.PENDING;
 
-    @Column(nullable = false)
-    private Boolean participated = false;
+
+    private Boolean participated;
 
     @Column()
     @Min(1)

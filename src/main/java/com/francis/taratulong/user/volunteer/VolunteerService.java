@@ -37,14 +37,14 @@ public class VolunteerService {
     }
 
 
-    public void addOneEventsAttended(Long id) {
+    public void updateEventsAttended(Long id, int number) {
         Volunteer volunteer = getVolunteer(id);
-        volunteer.setTotalEventsAttended(volunteer.getTotalEventsAttended() + 1);
+        volunteer.setTotalEventsAttended(volunteer.getTotalEventsAttended() + number);
     }
 
-    public void addOneTotalRegistrations(Long id) {
+    public void updateTotalRegistrations(Long id, int number) {
         Volunteer volunteer = getVolunteer(id);
-        volunteer.setTotalApprovedRegistrations(volunteer.getTotalApprovedRegistrations() + 1);
+        volunteer.setTotalApprovedRegistrations(volunteer.getTotalApprovedRegistrations() + number);
     }
 
 

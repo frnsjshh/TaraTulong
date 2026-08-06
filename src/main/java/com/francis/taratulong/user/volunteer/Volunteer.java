@@ -33,6 +33,7 @@ public class Volunteer extends AppUser {
 
     @PreUpdate
     private void updateAttendanceRate() {
+        if (totalEventsAttended == 0) return;
         //calculate attendance rate
         attendanceRate = BigDecimal.valueOf(totalApprovedRegistrations)
                         .divide(BigDecimal.valueOf(totalEventsAttended), ATTENDANCE_RATE_SCALE, RoundingMode.HALF_UP)
