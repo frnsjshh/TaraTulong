@@ -131,7 +131,7 @@ public class RegistrationService {
     }
 
     private void verifyOrgOwnershipToEvent(Long orgId, Long eventId) {
-        if(eventService.getOrganizer(eventId).equals(orgId))
+        if(!eventService.getOrganizer(eventId).equals(orgId))
             throw new UnauthorizedAccessException("Unauthorized");
     }
 
