@@ -74,27 +74,25 @@ public class RegistrationService {
                 : AttendanceStatus.CANCELLED_LATE;
 
         pointShiftAndRegistrationCounter(cancelStatus, registrationDb.getAttendanceStatus(), registrationDb);
+        registrationDb.setAttendanceStatus(cancelStatus);
         return cancelStatus;
     }
 
     public void pointShiftAndRegistrationCounter(AttendanceStatus newStatus, AttendanceStatus currentStatus, Registration registration) {
-        //point delta algorithm -2 - -25
+        Long volunteerId = registration.getVolunteer().getId();
+        //point delta algorithm
         int pointShift = newStatus.getPointValue() - currentStatus.getPointValue();
         volunteerService.updateTrustScore(registration.getVolunteer().getId(), pointShift);
 
         //not yet updated
-        if(currentStatus.equals(AttendanceStatus.PENDING)) {
-            //increment total registrations
-            volunteerService.updateTotalRegistrations(registration.getVolunteer().getId(), 1);
-            if(newStatus.equals(AttendanceStatus.PRESENT)) volunteerService.updateEventsAttended(registration.getVolunteer().getId(), newStatus); //increments on if present, no decrement needed since it started as pending
-        }
-        //updating existing status
-        //if both values are negative (e.g., NO_SHOW * CANCELLED_EARLY = -25 * -2), no change in events attended
-        else if((currentStatus.getPointValue()*newStatus.getPointValue()) < 0) {
-            //updates events attended depending on the status
-            //if present increment, if anything else decrement
-            volunteerService.updateEventsAttended(registration.getVolunteer().getId(), newStatus);
-        }
+        if(currentStatus.equals(AttendanceStatus.PENDING)) volunteerService.updateTotalRegistrations(registration.getVolunteer().getId(), 1);
+        boolean wasPresent = currentStatus.equals(AttendanceStatus.PRESENT);
+        boolean isPresent = newStatus.equals(AttendanceStatus.PRESENT);
+
+        //wasn't present, is now present
+        if(!wasPresent && isPresent) volunteerService.updateEventsAttended(volunteerId, 1);
+        else if(wasPresent && !isPresent) volunteerService.updateEventsAttended(volunteerId, -1);
+        // If they go from NO_SHOW to CANCELLED_LATE, neither boolean is true. It safely does nothing!
         registrationRepository.save(registration);
     }
 
