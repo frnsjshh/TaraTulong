@@ -1,5 +1,6 @@
 package com.francis.taratulong.registration.v1;
 
+import com.francis.taratulong.registration.AttendanceStatus;
 import com.francis.taratulong.registration.Registration;
 import com.francis.taratulong.registration.RegistrationService;
 import com.francis.taratulong.registration.v1.dto.RatingAndFeedbackRequestAndResponseDTO;
@@ -56,7 +57,7 @@ public class RegistrationController {
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentOrg
     ) {
-        registrationService.setPresent(id, currentOrg.getId());
+        registrationService.updateAttendanceStatus(id, currentOrg.getId(), AttendanceStatus.PRESENT);
         return ResponseEntity.noContent().build();
     }
 
@@ -65,7 +66,7 @@ public class RegistrationController {
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentOrg
     ) {
-        registrationService.setNotPresent(id, currentOrg.getId());
+        registrationService.updateAttendanceStatus(id, currentOrg.getId(), AttendanceStatus.NO_SHOW);
         return ResponseEntity.noContent().build();
     }
     @PatchMapping("/{id}/feedback")
