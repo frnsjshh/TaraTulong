@@ -49,7 +49,7 @@ public class RegistrationService {
         return registrationRepository.findAllByEventIdWithDetails(eventId, pageable);
     }
 
-
+    //UPDATE ATTENDANCE AS ORG
     // will not accept PENDING as a new status
     public void updateAttendanceStatus(Long eventId, Long org, AttendanceStatus newStatus) {
         Registration registration = getRegistration(eventId);
@@ -58,27 +58,44 @@ public class RegistrationService {
         AttendanceStatus currentStatus = registration.getAttendanceStatus();
         if(currentStatus.equals(newStatus)) return;
 
-        //point delta algorithm  -2 - -25
+        pointShiftAndRegistrationCounter(newStatus, currentStatus, registration);
+        registration.setAttendanceStatus(newStatus);
+    }
+
+    public AttendanceStatus cancelRegistration(Long id, Long volunteerId) {
+        Registration registrationDb = getRegistration(id);
+        if(!registrationDb.getVolunteer().getId().equals(volunteerId)) throw new UnauthorizedAccessException("Cannot cancel someone else's registration");
+        if(!isApproved(registrationDb)) throw new RegistrationConflictException("Cannot cancel registration. Registration not approved.");
+
+        LocalDateTime eventStartDateTime = registrationDb.getEvent().getStartDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        AttendanceStatus cancelStatus = now.plusHours(48).isBefore(eventStartDateTime)
+                ? AttendanceStatus.CANCELLED_EARLY
+                : AttendanceStatus.CANCELLED_LATE;
+
+        pointShiftAndRegistrationCounter(cancelStatus, registrationDb.getAttendanceStatus(), registrationDb);
+        return cancelStatus;
+    }
+
+    public void pointShiftAndRegistrationCounter(AttendanceStatus newStatus, AttendanceStatus currentStatus, Registration registration) {
+        //point delta algorithm -2 - -25
         int pointShift = newStatus.getPointValue() - currentStatus.getPointValue();
         volunteerService.updateTrustScore(registration.getVolunteer().getId(), pointShift);
 
         //not yet updated
         if(currentStatus.equals(AttendanceStatus.PENDING)) {
-            //increment total registrations and events attended depending on the status
+            //increment total registrations
             volunteerService.updateTotalRegistrations(registration.getVolunteer().getId(), 1);
-            volunteerService.updateEventsAttended(registration.getVolunteer().getId(), newStatus);
+            if(newStatus.equals(AttendanceStatus.PRESENT)) volunteerService.updateEventsAttended(registration.getVolunteer().getId(), newStatus); //increments on if present, no decrement needed since it started as pending
         }
         //updating existing status
         //if both values are negative (e.g., NO_SHOW * CANCELLED_EARLY = -25 * -2), no change in events attended
-        else if((currentStatus.getPointValue()*currentStatus.getPointValue()) < 0) {
+        else if((currentStatus.getPointValue()*newStatus.getPointValue()) < 0) {
             //updates events attended depending on the status
             //if present increment, if anything else decrement
             volunteerService.updateEventsAttended(registration.getVolunteer().getId(), newStatus);
         }
-
-
-
-        registration.setAttendanceStatus(newStatus);
+        registrationRepository.save(registration);
     }
 
     public Registration setRatingAndFeedback(Long id, int rating, String feedback, Long orgId) {
