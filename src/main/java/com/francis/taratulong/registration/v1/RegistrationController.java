@@ -8,6 +8,7 @@ import com.francis.taratulong.registration.v1.dto.RegistrationMapper;
 import com.francis.taratulong.registration.v1.dto.RegistrationRequestDTO;
 import com.francis.taratulong.registration.v1.dto.RegistrationResponseDTO;
 import com.francis.taratulong.user.AppUser;
+import com.francis.taratulong.user.volunteer.VolunteerService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class RegistrationController {
     private final RegistrationService registrationService;
     private final RegistrationMapper registrationMapper;
+    private final VolunteerService volunteerService;
 
     @PostMapping
     public ResponseEntity<RegistrationResponseDTO> createRegistration(
@@ -69,6 +71,16 @@ public class RegistrationController {
         registrationService.updateAttendanceStatus(id, currentOrg.getId(), AttendanceStatus.NO_SHOW);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<Void> setRegistrationToCancelled(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentUser
+    ) {
+        volunteerService.cancelRegistration(currentUser.getId(), id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{id}/feedback")
     public ResponseEntity<RatingAndFeedbackRequestAndResponseDTO> setRatingAndFeedback(
             @PathVariable Long id,
