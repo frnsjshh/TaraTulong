@@ -28,6 +28,9 @@ public class Volunteer extends AppUser {
     @Column(nullable = false)
     private int totalApprovedRegistrations = 0;
 
+    @Column(nullable = false)
+    private int trustScore = 50;
+
 
     private static final int ATTENDANCE_RATE_SCALE = 2;
 

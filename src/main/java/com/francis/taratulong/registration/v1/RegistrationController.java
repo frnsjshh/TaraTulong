@@ -1,5 +1,6 @@
 package com.francis.taratulong.registration.v1;
 
+import com.francis.taratulong.registration.AttendanceStatus;
 import com.francis.taratulong.registration.Registration;
 import com.francis.taratulong.registration.RegistrationService;
 import com.francis.taratulong.registration.v1.dto.RatingAndFeedbackRequestAndResponseDTO;
@@ -7,6 +8,7 @@ import com.francis.taratulong.registration.v1.dto.RegistrationMapper;
 import com.francis.taratulong.registration.v1.dto.RegistrationRequestDTO;
 import com.francis.taratulong.registration.v1.dto.RegistrationResponseDTO;
 import com.francis.taratulong.user.AppUser;
+import com.francis.taratulong.user.volunteer.VolunteerService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class RegistrationController {
     private final RegistrationService registrationService;
     private final RegistrationMapper registrationMapper;
+    private final VolunteerService volunteerService;
 
     @PostMapping
     public ResponseEntity<RegistrationResponseDTO> createRegistration(
@@ -56,7 +59,7 @@ public class RegistrationController {
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentOrg
     ) {
-        registrationService.setPresent(id, currentOrg.getId());
+        registrationService.updateAttendanceStatus(id, currentOrg.getId(), AttendanceStatus.PRESENT);
         return ResponseEntity.noContent().build();
     }
 
@@ -65,9 +68,19 @@ public class RegistrationController {
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentOrg
     ) {
-        registrationService.setNotPresent(id, currentOrg.getId());
+        registrationService.updateAttendanceStatus(id, currentOrg.getId(), AttendanceStatus.NO_SHOW);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<Void> setRegistrationToCancelled(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser currentUser
+    ) {
+        volunteerService.cancelRegistration(currentUser.getId(), id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{id}/feedback")
     public ResponseEntity<RatingAndFeedbackRequestAndResponseDTO> setRatingAndFeedback(
             @PathVariable Long id,

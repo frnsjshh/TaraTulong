@@ -3,6 +3,8 @@ package com.francis.taratulong.user.volunteer;
 
 import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
+import com.francis.taratulong.registration.AttendanceStatus;
+import com.francis.taratulong.registration.RegistrationService;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 public class VolunteerService {
     private final VolunteerRepository volunteerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RegistrationService registrationService;
 
     public Volunteer saveVolunteer(Volunteer volunteer) {
         Volunteer existingUser = volunteerRepository.findByEmail(volunteer.getEmail()).orElse(null);
@@ -29,6 +32,7 @@ public class VolunteerService {
         return volunteerRepository.findById(id).orElseThrow(() -> new UserNotFoundException("Volunteer not found"));
     }
 
+
     public Volunteer updateVolunteer(Long id, Volunteer volunteerRequest) {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(() -> new UserNotFoundException("Volunteer not found:" + id));
         volunteer.setFirstName(volunteerRequest.getFirstName());
@@ -37,9 +41,9 @@ public class VolunteerService {
     }
 
 
-    public void updateEventsAttended(Long id, int number) {
+    public void updateEventsAttended(Long id, int amountToShift) {
         Volunteer volunteer = getVolunteer(id);
-        volunteer.setTotalEventsAttended(volunteer.getTotalEventsAttended() + number);
+        volunteer.setTotalEventsAttended(volunteer.getTotalEventsAttended() + amountToShift);
     }
 
     public void updateTotalRegistrations(Long id, int number) {
@@ -47,7 +51,14 @@ public class VolunteerService {
         volunteer.setTotalApprovedRegistrations(volunteer.getTotalApprovedRegistrations() + number);
     }
 
+    public void updateTrustScore(Long id, int score) {
+        Volunteer volunteer = getVolunteer(id);
+        volunteer.setTrustScore(volunteer.getTrustScore() + score);
+    }
 
+    public AttendanceStatus cancelRegistration(Long registrationId, Long volunteerId) {
+        return registrationService.cancelRegistration(registrationId, volunteerId);
+    }
 
     public void deleteVolunteer(Long id) {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete volunteer. Volunteer not found: " + id));

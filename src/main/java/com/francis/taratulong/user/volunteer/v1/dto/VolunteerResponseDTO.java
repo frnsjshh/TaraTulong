@@ -9,6 +9,8 @@ public record VolunteerResponseDTO (
         String email,
         String firstName,
         String lastName,
+        int trustScore,
+        String trustTier,
         BigDecimal attendancePercentage,
         Integer totalEventsAttended
 ){

@@ -44,47 +44,56 @@ public class RegistrationService {
         return registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Registration not found."));
     }
 
-    public Page<Registration> getRegistrationsForEvent(Long eventId, Long ordId, Pageable pageable) {
-        verifyOrgOwnershipToEvent(ordId, eventId);
+    public Page<Registration> getRegistrationsForEvent(Long eventId, Long orgId, Pageable pageable) {
+        verifyOrgOwnershipToEvent(orgId, eventId);
         return registrationRepository.findAllByEventIdWithDetails(eventId, pageable);
     }
 
+    //UPDATE ATTENDANCE AS ORG
+    // will not accept PENDING as a new status
+    public void updateAttendanceStatus(Long eventId, Long org, AttendanceStatus newStatus) {
+        Registration registration = getRegistration(eventId);
+        verifyOrgOwnershipToEvent(org, eventId);
+        if(!isApproved(registration)) throw new RegistrationConflictException("Cannot update registration status. Registration not approved.");
+        AttendanceStatus currentStatus = registration.getAttendanceStatus();
+        if(currentStatus.equals(newStatus)) return;
 
-    public void setPresent(Long id, Long orgId) {
-        Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
-        verifyOrgOwnershipToRegistration(registrationDb, orgId);
-        if(!isApproved(registrationDb)) throw new RegistrationConflictException("Action denied: Attendance requires an approved registration status.");
-
-        //check if attendance is already marked as present
-        if(Boolean.TRUE.equals(registrationDb.getParticipated())) throw new RegistrationConflictException("Action denied: Registration already marked as present.");
-
-
-        if(registrationDb.getParticipated()==null) {
-            volunteerService.updateEventsAttended(registrationDb.getVolunteer().getId(), 1); //adding 1 to volunteer's total events attended'
-            volunteerService.updateTotalRegistrations(registrationDb.getVolunteer().getId(), 1); //adding 1 to volunteer's total registrations'
-        } else {
-            volunteerService.updateEventsAttended(registrationDb.getVolunteer().getId(), 1);
-        }
-
-        registrationDb.setParticipated(true);
+        pointShiftAndRegistrationCounter(newStatus, currentStatus, registration);
+        registration.setAttendanceStatus(newStatus);
     }
 
-    public void setNotPresent(Long id, Long orgId) {
-        Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
-        verifyOrgOwnershipToRegistration(registrationDb, orgId);
+    public AttendanceStatus cancelRegistration(Long id, Long volunteerId) {
+        Registration registrationDb = getRegistration(id);
+        if(!registrationDb.getVolunteer().getId().equals(volunteerId)) throw new UnauthorizedAccessException("Cannot cancel someone else's registration");
+        if(!isApproved(registrationDb)) throw new RegistrationConflictException("Cannot cancel registration. Registration not approved.");
 
-        if(!isApproved(registrationDb)) throw new RegistrationConflictException("Action denied: Attendance requires an approved registration status.");
+        LocalDateTime eventStartDateTime = registrationDb.getEvent().getStartDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        AttendanceStatus cancelStatus = now.plusHours(48).isBefore(eventStartDateTime)
+                ? AttendanceStatus.CANCELLED_EARLY
+                : AttendanceStatus.CANCELLED_LATE;
 
-        //check if attendance is already marked as not present
-        if(Boolean.FALSE.equals(registrationDb.getParticipated())) throw new RegistrationConflictException("Action denied: Registration already marked as not present.");
+        pointShiftAndRegistrationCounter(cancelStatus, registrationDb.getAttendanceStatus(), registrationDb);
+        registrationDb.setAttendanceStatus(cancelStatus);
+        return cancelStatus;
+    }
 
-        if(registrationDb.getParticipated()==null) {
-            volunteerService.updateTotalRegistrations(registrationDb.getVolunteer().getId(), 1);
-            //not adding 1 to volunteer's total events attended, volunteers absent
-        } else {
-            volunteerService.updateEventsAttended(registrationDb.getVolunteer().getId(), -1);
-        }
-        registrationDb.setParticipated(false);
+    public void pointShiftAndRegistrationCounter(AttendanceStatus newStatus, AttendanceStatus currentStatus, Registration registration) {
+        Long volunteerId = registration.getVolunteer().getId();
+        //point delta algorithm
+        int pointShift = newStatus.getPointValue() - currentStatus.getPointValue();
+        volunteerService.updateTrustScore(registration.getVolunteer().getId(), pointShift);
+
+        //not yet updated
+        if(currentStatus.equals(AttendanceStatus.PENDING)) volunteerService.updateTotalRegistrations(registration.getVolunteer().getId(), 1);
+        boolean wasPresent = currentStatus.equals(AttendanceStatus.PRESENT);
+        boolean isPresent = newStatus.equals(AttendanceStatus.PRESENT);
+
+        //wasn't present, is now present
+        if(!wasPresent && isPresent) volunteerService.updateEventsAttended(volunteerId, 1);
+        else if(wasPresent && !isPresent) volunteerService.updateEventsAttended(volunteerId, -1);
+        // If they go from NO_SHOW to CANCELLED_LATE, neither boolean is true. It safely does nothing!
+        registrationRepository.save(registration);
     }
 
     public Registration setRatingAndFeedback(Long id, int rating, String feedback, Long orgId) {
