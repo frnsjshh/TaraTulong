@@ -1,616 +1,397 @@
-# TaraTulong — Volunteer Management API
+# TaraTulong — Volunteer Management REST API
 
-> A backend API for connecting volunteers with grassroots organizations in the Philippines, with built-in event management, application workflows, attendance tracking, and reputation scoring.
-
-**TaraTulong** is a REST API designed to make volunteer coordination more accessible to small organizations such as student councils, school clubs, local NGOs, and community groups.
-
-The project started from a simple problem: many grassroots organizations do not have dedicated volunteer-management systems. Instead, they often coordinate opportunities through Facebook groups, Google Forms, spreadsheets, and messaging applications.
-
-TaraTulong consolidates that workflow into a single backend system while exploring several real-world backend engineering concerns:
-
-* Authentication and authorization
-* Role-based access control
-* Event capacity management
-* Application state transitions
-* Attendance tracking
-* Reputation and trust scoring
-* Database performance
-* Concurrent updates
-* DTO-based API design
-* API versioning
+A backend API for connecting volunteers with grassroots organizations in the Philippines — built with Spring Boot 4, Spring Security, and PostgreSQL.
 
 ---
 
-## Why I Built This
+## The Problem
 
-The idea for TaraTulong came from experiencing community volunteer activities firsthand, including organizing reading tutorials for students at Macanhan Elementary School.
+Many grassroots organizations — student councils, school clubs, local NGOs, community groups — coordinate volunteer opportunities through Facebook groups, Google Forms, spreadsheets, and messaging apps.
 
-I noticed that volunteer coordination can become surprisingly difficult once an organization has to answer questions such as:
+This creates recurring problems:
 
-* Who has applied?
-* Who should be accepted?
-* Is the event already full?
-* Has this volunteer attended previous events?
-* What happens when someone cancels?
-* How do we distinguish an early cancellation from a no-show?
-* How do we prevent two people from taking the last available slot simultaneously?
+- No centralized view of who has applied, been approved, or attended
+- No way to track volunteer reliability across events
+- No capacity enforcement — events can be silently overbooked
+- No distinction between a responsible early cancellation and a no-show
+- Race conditions when two people try to claim the last available slot
 
-For large organizations, these problems can be handled by dedicated platforms and administrative systems.
+**TaraTulong** models that coordination workflow as a proper backend system with role-based access, state-managed registrations, attendance tracking, and a reputation scoring algorithm.
 
-For smaller organizations, the workflow is often distributed across forms, spreadsheets, social-media posts, and chat messages.
-
-TaraTulong is an attempt to model that workflow as a proper backend system.
-
----
-
-## Core Use Cases
-
-### Organizations
-
-Organizations can:
-
-* Create and manage volunteer events
-* Define event capacities
-* Review volunteer applications
-* Approve or reject applicants
-* Track attendance
-* Manage event participants
-* View volunteer reputation information
-
-### Volunteers
-
-Volunteers can:
-
-* Discover volunteer opportunities
-* Apply to events
-* Track their registration status
-* Build a verifiable participation history
-* Earn reputation through reliable participation
-
-### Administrators
-
-Administrators provide platform-level oversight, including management of organizations and users.
+The idea came from firsthand experience organizing reading tutorials for students at Macanhan Elementary School, where I saw how volunteer coordination breaks down without structure.
 
 ---
 
 ## Key Features
 
-### Event Management
+### Registration State Machine
 
-Organizations can create events with defined:
-
-* Capacity
-* Schedule
-* Location
-* Description
-* Registration status
-* Participant list
-
-The API also handles the event lifecycle and prevents invalid state transitions.
-
-### Application Pipeline
-
-Instead of relying on external forms, volunteer applications are represented as persistent domain objects.
-
-A registration moves through explicit states such as:
+Volunteer applications move through explicit states rather than arbitrary string values:
 
 ```text
 PENDING
-   │
-   ├──> APPROVED
-   │       │
-   │       ├──> PRESENT
-   │       └──> NO_SHOW
-   │
-   └──> REJECTED
+   ├──→ APPROVED
+   │       ├──→ PRESENT
+   │       ├──→ NO_SHOW
+   │       ├──→ CANCELLED_EARLY
+   │       └──→ CANCELLED_LATE
+   └──→ REJECTED
 ```
 
-Cancellation is also differentiated based on timing so that the system can distinguish between responsible cancellations and late cancellations.
+Each state transition triggers downstream effects — slot count adjustments, trust score updates, and attendance statistics recalculation.
 
-### Trust Score
+### Trust Score Algorithm
 
-Volunteer reliability is represented by a point-based reputation system.
+Volunteer reliability is calculated using a **point delta system** rather than a simple attendance percentage.
 
-Rather than calculating reputation solely from attendance percentage, different attendance outcomes contribute different point deltas.
+| Outcome | Points |
+|---|---:|
+| `PRESENT` | +10 |
+| `CANCELLED_EARLY` | -2 |
+| `CANCELLED_LATE` | -10 |
+| `NO_SHOW` | -25 |
 
-For example:
+The key design decision: when an organization **corrects** an attendance record (e.g., marking a `NO_SHOW` as `PRESENT`), the system calculates the delta between the old and new states:
 
-| Attendance Status | Points |
-| ----------------- | -----: |
-| `PRESENT`         |    +10 |
-| `CANCELLED_EARLY` |     -2 |
-| `CANCELLED_LATE`  |    -10 |
-| `NO_SHOW`         |    -25 |
+```text
+New points = newStatus.pointValue - currentStatus.pointValue
+           = PRESENT(+10) - NO_SHOW(-25)
+           = +35 correction
+```
 
-This allows the system to distinguish between:
+This makes corrections safe and idempotent — the score always reflects the current state regardless of how many times it was changed. The accumulated score maps to a human-readable **Trust Tier** (Platinum → Gold → Silver → Bronze → High Risk) via a custom MapStruct mapping.
 
-> "I cancelled early enough for the organization to find someone else."
+### Early vs Late Cancellation
 
-and:
+Cancellations are classified based on a **48-hour threshold** before the event start:
 
-> "I accepted a slot but did not show up."
+```java
+AttendanceStatus cancelStatus = now.plusHours(48).isBefore(eventStartDateTime)
+        ? AttendanceStatus.CANCELLED_EARLY   // -2 points
+        : AttendanceStatus.CANCELLED_LATE;   // -10 points
+```
 
-The accumulated score is then mapped to a human-readable **Trust Tier**.
+This lets the system distinguish _"I cancelled with enough notice for the org to find a replacement"_ from _"I cancelled at the last minute."_
 
-The important design decision here is that reputation is derived from **domain events and state transitions**, rather than being treated as an arbitrary number stored independently from the underlying participation history.
+### Capacity Management with Optimistic Locking
+
+Events have a `slotsAvailable` counter that decrements on approval and increments if an approved registration is rejected or cancelled.
+
+The `Event` entity uses a JPA `@Version` field to prevent concurrent approvals from over-allocating the last slot. If two approval requests race, the second receives:
+
+```http
+409 Conflict — "The resource was modified. Refresh and try again"
+```
+
+This is caught globally via `@ControllerAdvice` handling `ObjectOptimisticLockingFailureException`.
+
+### IDOR Prevention
+
+Authorization goes beyond role checks. The service layer verifies **resource ownership** before allowing operations:
+
+```text
+Org user hits PATCH /registrations/42/status/approved
+  → Spring Security: Is this user an ORG? ✓
+  → Service layer: Does this org own the event tied to registration 42? ✓ or 403
+```
+
+This prevents insecure direct object reference (IDOR) attacks where an organization could modify another organization's events by changing the ID in the request.
+
+### Soft Deletes
+
+Users and events are soft-deleted using Hibernate 6's `@SQLRestriction("deleted=false")`. Deleted volunteers have their email mangled (`DELETED_<email>_<timestamp>`) to free the unique constraint for re-registration.
 
 ---
 
-# Technical Stack
+## Tech Stack
 
-| Area                  | Technology                  |
-| --------------------- | --------------------------- |
-| Language              | Java 21                     |
-| Framework             | Spring Boot 3               |
-| Database              | PostgreSQL                  |
-| Persistence           | Spring Data JPA / Hibernate |
-| Security              | Spring Security + JWT       |
-| API Documentation     | OpenAPI 3 / Swagger UI      |
-| Object Mapping        | MapStruct                   |
-| Boilerplate Reduction | Lombok                      |
-| Build Tool            | Maven                       |
+| Layer | Technology |
+|---|---|
+| Language | Java 21 |
+| Framework | Spring Boot 4 |
+| Security | Spring Security + JWT (jjwt 0.11.5) |
+| Persistence | Spring Data JPA / Hibernate 6 |
+| Database | PostgreSQL |
+| Object Mapping | MapStruct 1.5.5 |
+| Validation | Jakarta Bean Validation |
+| API Docs | OpenAPI 3 / Swagger UI (springdoc) |
+| Build | Maven |
 
 ---
 
-# Backend Architecture
-
-The application follows a layered architecture designed to keep HTTP concerns, business logic, and persistence concerns separated.
+## Architecture
 
 ```text
 HTTP Request
      │
      ▼
-┌─────────────────┐
-│   Controller    │
-│ REST / DTOs     │
-└────────┬────────┘
+┌─────────────────────┐
+│   Controller        │  ← DTOs (Java Records), @Valid, @AuthenticationPrincipal
+│   api/v1/*          │
+└────────┬────────────┘
          │
          ▼
-┌─────────────────┐
-│    Service      │
-│ Business Rules  │
-└────────┬────────┘
+┌─────────────────────┐
+│   Service           │  ← Business rules, ownership verification, state transitions
+└────────┬────────────┘
          │
          ▼
-┌─────────────────┐
-│   Repository    │
-│ Spring Data JPA │
-└────────┬────────┘
+┌─────────────────────┐
+│   Repository        │  ← Spring Data JPA, custom JPQL queries
+└────────┬────────────┘
          │
          ▼
-┌─────────────────┐
-│   PostgreSQL    │
-└─────────────────┘
+┌─────────────────────┐
+│   PostgreSQL        │
+└─────────────────────┘
 ```
 
-DTOs and Java Records are used at the API boundary rather than exposing JPA entities directly.
+**Package structure is organized by feature** (event, registration, user, security) rather than by technical layer. Each feature contains its entity, service, repository, and a `v1/` subpackage with the controller and DTOs.
 
-This keeps persistence models separate from the public API contract and reduces risks associated with accidental field exposure or unintended entity updates.
+**DTOs use Java Records** at the API boundary — request DTOs carry validation annotations, response DTOs expose only the fields the client needs. MapStruct handles the mapping between entities and DTOs, including custom logic like the trust tier calculation.
+
+**JPA inheritance** — `AppUser` is the base entity (with `@Inheritance(strategy = InheritanceType.JOINED)`), extended by `Volunteer`, `Org`, and `Admin`. This was chosen over `SINGLE_TABLE` to avoid nullable columns and keep each role's data normalized, at the cost of requiring joins for polymorphic queries.
 
 ---
 
-# Engineering Decisions
-
-The project is intentionally more than a CRUD application. Several parts were designed around problems that occur in real backend systems.
-
-## 1. Domain-Driven Trust Score Calculation
-
-A simple attendance percentage does not adequately represent volunteer reliability.
-
-Consider two volunteers:
+## Data Model
 
 ```text
-Volunteer A
-10 events attended
-1 cancellation 48 hours before the event
-
-Volunteer B
-10 events attended
-1 no-show
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│   AppUser    │      │    Event     │      │ Registration │
+│──────────────│      │──────────────│      │──────────────│
+│ id (PK)      │      │ id (PK)      │      │ id (PK)      │
+│ uuid (UK)    │      │ organizer_id │◄─────│ event_id     │ (indexed)
+│ email (UK)   │      │ title        │      │ volunteer_id │ (indexed)
+│ password     │      │ description  │      │ reg_status   │
+│ role         │      │ startDateTime│      │ attend_status│
+│ joinDate     │      │ endDateTime  │      │ rating (1-5) │
+│ deleted      │      │ cutOffTime   │      │ feedback     │
+└──────┬───────┘      │ location     │      │ appliedAt    │
+       │              │ slotsAvail.  │      └──────────────┘
+       │ JOINED       │ version (OL) │
+  ┌────┼────┐         │ deleted      │
+  ▼    ▼    ▼         └──────────────┘
+┌────┐┌────┐┌─────┐
+│Vol.││Org ││Admin│
+│    ││    ││     │
+│name││name││name │
+│trust││desc││     │
+│rate││loc  ││     │
+│etc.││etc. ││     │
+└────┘└────┘└─────┘
 ```
 
-A simple attendance percentage can make these cases appear similar.
-
-TaraTulong instead assigns different point deltas to attendance outcomes.
-
-The calculation is based on explicit domain states represented by an `AttendanceStatus` enum.
-
-This provides two important properties:
-
-1. The scoring rules are centralized.
-2. Changes to an attendance record can be calculated from the transition between states rather than blindly adding points.
-
-MapStruct is also used to map domain values into API-friendly representations such as Trust Tiers.
+Key relationships:
+- `Org` → `Event`: One-to-many (an org creates events)
+- `Volunteer` → `Registration` → `Event`: Many-to-many through `Registration`
+- `Admin` → `Org`: One-to-many (admin approves organizations)
+- All `FetchType.LAZY` by default — eager loading only via explicit `JOIN FETCH` queries
 
 ---
 
-## 2. Explicit State Transitions
+## Security
 
-Registration status is modeled explicitly instead of allowing arbitrary string values.
+| Concern | Implementation |
+|---|---|
+| Authentication | Stateless JWT (HS256, 24h expiry) via custom `OncePerRequestFilter` |
+| Password storage | BCrypt via Spring Security's `PasswordEncoder` |
+| Role-based access | `ADMIN`, `ORG`, `VOLUNTEER` enforced in `SecurityFilterChain` |
+| Resource ownership | Service-layer checks before mutation operations |
+| CSRF | Disabled (stateless JWT, no cookies) |
+| CORS | Configured for `localhost:3000` (development) |
+| Session | `STATELESS` — no server-side session |
 
-For example:
+---
 
-```java
-public enum AttendanceStatus {
-    PENDING(0),
-    PRESENT(10),
-    NO_SHOW(-25),
-    CANCELLED_EARLY(-2),
-    CANCELLED_LATE(-10);
+## Error Handling
+
+All exceptions are caught by a `@ControllerAdvice` handler and returned in a consistent structure:
+
+```json
+{
+  "timeStamp": "2026-08-08T10:30:00",
+  "status": 409,
+  "error": "Conflict",
+  "message": "Registration already approved.",
+  "path": "/api/v1/registrations/42/status/approved"
 }
 ```
 
-This makes invalid states easier to prevent and keeps business rules close to the domain model.
+Handled exception types include:
 
-It also provides a foundation for enforcing rules such as:
+| Exception | HTTP Status | When |
+|---|---|---|
+| `BaseNotFoundException` subclasses | 404 | Entity not found |
+| `UserAlreadyExistsException` | 409 | Duplicate email on registration |
+| `VolunteerAlreadyRegisteredException` | 409 | Duplicate event registration |
+| `RegistrationConflictException` | 409 | Invalid state transition |
+| `EventRegistrationClosed` | 400 | Past cutoff or no slots |
+| `ObjectOptimisticLockingFailureException` | 409 | Concurrent modification detected |
+| `MethodArgumentNotValidException` | 400 | Bean validation failures (field-level messages) |
+| `UnauthorizedAccessException` | 403 | Resource ownership check failed |
 
-```text
-PENDING → PRESENT
-PENDING → CANCELLED_EARLY
-PENDING → CANCELLED_LATE
-PENDING → NO_SHOW
-```
-
-rather than allowing unrelated statuses to be assigned without validation.
-
----
-
-## 3. Optimistic Locking for Concurrent Registrations
-
-One of the more interesting concurrency problems is event capacity.
-
-Imagine an event has one remaining slot:
-
-```text
-Event capacity: 30
-Current registrations: 29
-```
-
-Two volunteers submit applications at nearly the same time.
-
-Without concurrency control, both transactions could potentially observe the event as having an available slot.
-
-TaraTulong uses **JPA optimistic locking** with `@Version` to detect conflicting updates.
-
-When a stale entity attempts to update a record that has already changed, Hibernate raises an optimistic-locking exception.
-
-The API catches this through a global `@ControllerAdvice` and translates the failure into an appropriate HTTP response such as:
-
-```http
-409 Conflict
-```
-
-This allows the database to remain the source of truth while providing a meaningful API-level response to the client.
+Validation errors extract field-level messages from `BindingResult` rather than returning raw framework exceptions.
 
 ---
 
-## 4. Handling the N+1 Query Problem
+## API Endpoints
 
-Entity relationships make it easy to accidentally generate large numbers of SQL queries.
+### Authentication
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/v1/auth/login` | Public | Returns JWT token |
 
-For example:
+### Events
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/v1/events` | Public | List all events (paginated, sorted by date) |
+| GET | `/api/v1/events/{id}` | Public | Get event details |
+| GET | `/api/v1/events/org/{orgId}` | Public | Events by organization (paginated) |
+| POST | `/api/v1/events` | ORG | Create event |
+| PUT | `/api/v1/events/{id}` | ORG (owner) | Update event |
+| DELETE | `/api/v1/events/{id}` | ORG (owner) | Soft delete event |
 
-```text
-Get Events
-   │
-   ├── Get Organization
-   ├── Get Registrations
-   │      ├── Get Volunteer
-   │      ├── Get Volunteer
-   │      └── Get Volunteer
-   └── ...
-```
+### Registrations
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/v1/registrations` | VOLUNTEER | Apply to an event |
+| GET | `/api/v1/registrations/{id}` | Authenticated | Get registration |
+| GET | `/api/v1/registrations/events/{eventId}` | ORG (owner) | List registrations for an event |
+| PATCH | `/api/v1/registrations/{id}/status/approved` | ORG (owner) | Approve registration (decrements slots) |
+| PATCH | `/api/v1/registrations/{id}/status/rejected` | ORG (owner) | Reject registration |
+| PATCH | `/api/v1/registrations/{id}/present` | ORG (owner) | Mark as present |
+| PATCH | `/api/v1/registrations/{id}/absent` | ORG (owner) | Mark as no-show |
+| PATCH | `/api/v1/registrations/{id}/cancel` | VOLUNTEER (owner) | Cancel registration |
+| PATCH | `/api/v1/registrations/{id}/feedback` | ORG (owner) | Rate volunteer (1-5) + feedback |
+| DELETE | `/api/v1/registrations/{id}` | VOLUNTEER (owner) | Delete registration |
 
-This can result in the classic **N+1 query problem**.
+### Users
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/v1/volunteers` | Public | Register volunteer |
+| GET | `/api/v1/volunteers/me` | VOLUNTEER | Get own profile |
+| PUT | `/api/v1/volunteers/me` | VOLUNTEER | Update profile |
+| DELETE | `/api/v1/volunteers/me` | VOLUNTEER | Soft delete account |
+| POST | `/api/v1/orgs` | Public | Register organization |
+| GET | `/api/v1/orgs/{id}` | Public | View organization |
+| PATCH | `/user/password` | Authenticated | Change password |
+| PATCH | `/user/email` | Authenticated | Change email |
 
-To address this, the project:
+### Admin
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| PATCH | `/api/v1/admin/me/approve/{orgId}` | ADMIN | Approve organization |
+| PATCH | `/api/v1/admin/me/reject/{orgId}` | ADMIN | Reject organization |
 
-* Uses `FetchType.LAZY` where appropriate
-* Defines explicit repository queries for read-heavy operations
-* Uses `JOIN FETCH` where eager loading is actually required
-* Uses dedicated `countQuery` definitions when paginating complex queries
-
-The goal is not to make every relationship eager, but to make fetching behavior intentional.
-
----
-
-## 5. DTO-Based API Boundary
-
-JPA entities are not exposed directly through REST endpoints.
-
-Instead, controllers operate on DTOs / Java Records.
-
-For example:
-
-```text
-HTTP Request
-     │
-     ▼
-RegistrationRequest
-     │
-     ▼
-Registration Entity
-     │
-     ▼
-RegistrationResponse
-     │
-     ▼
-HTTP Response
-```
-
-This provides a clear separation between:
-
-* Persistence representation
-* Business/domain representation
-* Public API representation
-
-It also reduces the risk of over-posting and accidental exposure of internal fields.
+Full interactive docs available via **Swagger UI** at `/swagger-ui.html` after starting the application.
 
 ---
 
-## 6. API Versioning
+## Database Performance
 
-Endpoints are versioned under:
-
-```text
-/api/v1/
-```
-
-For example:
-
-```text
-/api/v1/events
-/api/v1/registrations
-/api/v1/organizations
-```
-
-The intention is to establish an explicit API contract so that future frontend or mobile clients can evolve independently from the backend.
+- **Indexes** on `registration.event_id` and `registration.volunteer_id` (defined via `@Table(indexes = ...)` on the `Registration` entity)
+- **`FetchType.LAZY`** on all `@ManyToOne` and `@OneToMany` relationships
+- **`JOIN FETCH`** with a dedicated `countQuery` for the paginated registrations-by-event query — avoids both N+1 queries and the Hibernate pagination-with-fetch-join issue
+- **Pagination** on all list endpoints using Spring Data's `Pageable` with configurable size and sort
 
 ---
 
-## 7. Database Indexing
+## Getting Started
 
-Frequently queried columns and foreign-key relationships are indexed where appropriate.
+### Prerequisites
 
-Examples include:
+- Java 21
+- Maven
+- PostgreSQL
 
-```text
-event_id
-organization_id
-volunteer_id
-```
+### Environment Variables
 
-The purpose is to reduce unnecessary table scanning as the dataset grows.
+| Variable | Description |
+|---|---|
+| `JWT_SECRET` | Base64-encoded secret key for JWT signing (HS256) |
 
-Indexes are treated as a query-performance optimization rather than something that should be added indiscriminately. The appropriate indexes depend on actual query patterns and database execution plans.
-
----
-
-# Security
-
-## Stateless JWT Authentication
-
-Authentication uses Spring Security with JWT-based stateless authentication.
-
-Requests provide a token through:
-
-```http
-Authorization: Bearer <token>
-```
-
-The backend validates the token and establishes the authenticated user before protected endpoints are executed.
-
----
-
-## Role-Based Access Control
-
-The application separates permissions between:
-
-```text
-ADMIN
-ORGANIZATION
-VOLUNTEER
-```
-
-Authorization is enforced both at the security configuration level and within the service layer where resource ownership matters.
-
----
-
-## Resource Ownership / IDOR Prevention
-
-Authorization does not stop at checking a user's role.
-
-For example, being an `ORGANIZATION` user does not automatically mean that the user can modify every event in the system.
-
-Before performing organization-specific operations, the service layer verifies that the authenticated organization actually owns the requested resource.
-
-Conceptually:
-
-```text
-Authenticated Organization
-          │
-          ▼
-Does this organization own Event #123?
-          │
-      ┌───┴───┐
-     YES      NO
-      │        │
-      ▼        ▼
-  Continue    403
-```
-
-This prevents insecure direct object reference (IDOR) scenarios where a user attempts to manipulate another organization's resources by changing an ID in the request.
-
----
-
-# API Documentation
-
-The API uses **OpenAPI 3** and Swagger UI.
-
-After starting the application, Swagger UI is available at:
-
-```text
-http://localhost:8080/swagger-ui.html
-```
-
-It provides an interactive interface for:
-
-* Exploring endpoints
-* Viewing request/response schemas
-* Understanding required parameters
-* Testing API operations
-* Authorizing requests using JWT
-
----
-
-# Getting Started
-
-## Prerequisites
-
-Make sure you have:
-
-* Java 21
-* Maven
-* PostgreSQL
-
-## 1. Clone the repository
+### Setup
 
 ```bash
-git clone https://github.com/yourusername/taratulong.git
-cd taratulong
-```
+# Clone
+git clone https://github.com/yourusername/TaraTulong.git
+cd TaraTulong
 
-## 2. Create the PostgreSQL database
+# Create the database
+psql -U postgres -c "CREATE DATABASE taratulong_db;"
 
-```sql
-CREATE DATABASE taratulong;
-```
+# Configure database connection in application.properties or via env vars:
+# spring.datasource.url=jdbc:postgresql://localhost:5432/taratulong_db
+# spring.datasource.username=<your_username>
+# spring.datasource.password=<your_password>
 
-## 3. Configure the database
+# Set JWT secret
+export JWT_SECRET=<your-base64-encoded-secret>
 
-Configure your PostgreSQL connection in `application.properties` or through environment variables.
-
-Example:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/taratulong
-spring.datasource.username=your_username
-spring.datasource.password=your_password
-```
-
-For local development, credentials should preferably be supplied through environment variables rather than committed to the repository.
-
-## 4. Build the project
-
-```bash
+# Build and run
 mvn clean install
-```
-
-## 5. Run the application
-
-```bash
 mvn spring-boot:run
 ```
 
-The API will start on:
-
-```text
-http://localhost:8080
-```
-
-Swagger UI:
-
-```text
-http://localhost:8080/swagger-ui.html
-```
+The API starts at `http://localhost:8080`. Swagger UI is at `http://localhost:8080/swagger-ui.html`.
 
 ---
 
-# Project Status
-
-TaraTulong is an actively developed backend project.
+## Project Status
 
 ### Implemented
+- REST API with versioned endpoints (`/api/v1/`)
+- PostgreSQL persistence with Spring Data JPA / Hibernate 6
+- JWT authentication with stateless sessions
+- Role-based access control (Admin, Organization, Volunteer)
+- Event CRUD with capacity management
+- Registration workflow with state transitions
+- Attendance tracking with early/late cancellation differentiation
+- Trust Score algorithm with point deltas and tier mapping
+- Optimistic locking for concurrent slot management
+- DTO-based API boundary with MapStruct
+- Global exception handling with consistent error responses
+- Bean validation on all request DTOs
+- Database indexing on foreign keys
+- OpenAPI 3 / Swagger UI documentation
+- Soft deletes with `@SQLRestriction`
+- Organization approval workflow (Admin → Org)
+- CORS configuration
 
-* [x] REST API
-* [x] PostgreSQL persistence
-* [x] Spring Data JPA / Hibernate
-* [x] JWT authentication
-* [x] Role-based authorization
-* [x] Event management
-* [x] Volunteer registration workflow
-* [x] Attendance tracking
-* [x] Trust Score calculation
-* [x] Optimistic locking
-* [x] DTO-based API architecture
-* [x] API versioning
-* [x] OpenAPI / Swagger documentation
-* [x] Database indexing
-* [x] Global exception handling
-
-### In Progress
-
-* [ ] Volunteer opportunity discovery frontend
-* [ ] Organization dashboard
-* [ ] Volunteer dashboard
-* [ ] Automated testing expansion
-* [ ] Deployment
-* [ ] Production observability
-
----
-
-# What I Learned
-
-The primary goal of TaraTulong was not simply to build another CRUD API.
-
-The project gave me an opportunity to explore what happens when a backend has to enforce **real business rules and consistency constraints**.
-
-In particular, I gained practical experience with:
-
-* Designing REST APIs around domain workflows
-* Modeling state transitions
-* Managing relational data with JPA/Hibernate
-* Identifying and addressing N+1 queries
-* Using optimistic locking for concurrent updates
-* Separating entities from API DTOs
-* Implementing JWT authentication and RBAC
-* Designing database indexes around query patterns
-* Handling business exceptions at the API boundary
-* Thinking about consistency and authorization beyond the controller layer
-
-The most important lesson was that backend engineering is not primarily about creating endpoints.
-
-It is about ensuring that **the system remains correct when users, requests, and data interact in ways that the happy path does not anticipate.**
+### Not Yet Implemented
+- Automated tests (test scaffolding exists but no test methods yet)
+- Docker / containerized deployment
+- CI/CD pipeline
+- Email notifications
+- Event search and filtering
+- Waitlist management
 
 ---
 
-# Roadmap
+## Challenges and Lessons Learned
 
-The longer-term goal is to turn TaraTulong into a complete volunteer-management platform.
+**Concurrent slot management** was the most technically interesting problem. Initially I didn't account for two simultaneous approvals claiming the last slot. Adding `@Version` to the `Event` entity solved this, but I also had to handle the resulting exception at the API layer — returning a meaningful 409 instead of a 500 with a Hibernate stack trace.
 
-Potential next steps include:
+**The point delta algorithm** went through several iterations. My first approach stored trust scores as absolute values recalculated from scratch on every update. This was expensive and fragile. The current delta-based approach (`newStatus.points - currentStatus.points`) handles corrections naturally — if an org accidentally marks a volunteer as `NO_SHOW` and then corrects it to `PRESENT`, the math self-corrects without needing to replay the entire history.
 
-* Frontend application using React
-* Organization verification workflow
-* Volunteer feedback and post-event evaluation
-* Event search and filtering
-* Waitlist management
-* Email / notification system
-* Automated integration tests
-* Dockerized deployment
-* CI/CD pipeline
-* Production monitoring and logging
-* Role-specific dashboards
-* More comprehensive audit history
+**Soft deletes and unique constraints** were a practical annoyance. When a user is soft-deleted, their email still occupies the unique constraint. Mangling the email with a `DELETED_` prefix and timestamp was the pragmatic solution, though a proper approach might use a partial unique index in PostgreSQL.
+
+**JPA inheritance trade-offs** became apparent as the project grew. `JOINED` inheritance keeps data clean but means every `AppUser` query requires joins across the `volunteer`, `org`, and `admin` tables. For this project's scale, the trade-off is reasonable; at production scale, I would consider whether `SINGLE_TABLE` with discriminator columns would perform better for auth-heavy query patterns.
+
+**The N+1 problem** appeared when listing registrations for an event — each registration lazily loaded its volunteer and event, generating dozens of queries for a single page. The `JOIN FETCH` with separate `countQuery` in the repository solved this, but I learned that fixing N+1 isn't just about adding `EAGER` everywhere — it's about making fetch behavior intentional per query.
 
 ---
 
-# Project Philosophy
+## What This Project Demonstrates
 
-TaraTulong is both a product idea and a backend engineering project.
-
-The product goal is to make community volunteering more accessible to smaller organizations.
-
-The engineering goal is to understand how to build a system where **business rules, authorization, persistence, and concurrent operations remain consistent as complexity increases.**
-
-That distinction is important: the project is intentionally being developed beyond basic CRUD to explore the engineering problems that appear in production backend systems.
+- Designing REST APIs around **domain workflows** rather than database tables
+- Modeling **state transitions** with enums and enforcing valid transitions in the service layer
+- Implementing **JWT authentication and RBAC** with Spring Security
+- Preventing **IDOR vulnerabilities** through service-layer ownership verification
+- Solving the **N+1 query problem** with `JOIN FETCH` and `countQuery`
+- Using **optimistic locking** to handle concurrent updates
+- Building a **consistent error handling** strategy with `@ControllerAdvice`
+- Separating **persistence models from API contracts** using DTOs and MapStruct
+- Making **database performance decisions** (indexes, fetch strategies, pagination) based on query patterns
+- Understanding that backend engineering is about ensuring the system remains correct when users, requests, and data interact in ways the happy path doesn't anticipate
