@@ -49,6 +49,12 @@ public class RegistrationService {
         return registrationRepository.findAllByEventIdWithDetails(eventId, pageable);
     }
 
+
+
+    public Page<Registration> getRegistrationsForVolunteer(Long volunteerId, Status status, Pageable pageable) {
+        return registrationRepository.findAllByVolunteerIdWithDetails(volunteerId, status, pageable);
+    }
+
     //UPDATE ATTENDANCE AS ORG
     // will not accept PENDING as a new status
     public void updateAttendanceStatus(Long eventId, Long org, AttendanceStatus newStatus) {
