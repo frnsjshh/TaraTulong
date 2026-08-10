@@ -5,6 +5,7 @@ import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,12 +13,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class OrgService {
     private final OrgRepository orgRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public Org saveOrg(Org org) {
         Org dbFound = orgRepository.findByEmail(org.getEmail()).orElse(null);
         if(dbFound!=null&&!dbFound.isDeleted()) {
             throw  new UserAlreadyExistsException("Cannot create account. Email already in use", org.getEmail());
         }
+        org.setPassword(passwordEncoder.encode(org.getPassword()));
         org.setRole(Role.ORG);
         return orgRepository.save(org);
     }

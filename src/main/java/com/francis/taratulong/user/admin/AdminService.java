@@ -7,6 +7,7 @@ import com.francis.taratulong.user.Role;
 import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,12 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminService {
     private final AdminRepository adminRepository;
     private final OrgService orgService;
+    private final PasswordEncoder passwordEncoder;
 
     public Admin saveAdmin(Admin admin){
         Admin adminDB = adminRepository.findByEmail(admin.getEmail()).orElse(null);
         if(adminDB!=null&&!adminDB.isDeleted()){
             throw new UserAlreadyExistsException("Cannot create admin. User already exist", adminDB.getEmail());
         }
+        admin.setPassword(passwordEncoder.encode(admin.getPassword()));
         admin.setRole(Role.ADMIN);
         return adminRepository.save(admin);
     }
