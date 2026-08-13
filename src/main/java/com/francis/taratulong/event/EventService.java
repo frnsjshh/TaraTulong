@@ -1,6 +1,7 @@
 package com.francis.taratulong.event;
 
 import com.francis.taratulong.exception.EventNotFoundException;
+import com.francis.taratulong.exception.InvalidDateRangeException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgRepository;
@@ -22,6 +23,7 @@ public class EventService {
 
     public Event saveEvent(Long orgId, Event event) {
         Org org = orgRepository.findById(orgId).orElseThrow(()->new UserNotFoundException("Cannot create event. Organization not found."));
+        if(event.getStartDateTime().isAfter(event.getEndDateTime())) throw new InvalidDateRangeException("End date must be after the start date");
         event.setOrganizer(org);
         return eventRepository.save(event);
     }

@@ -1,5 +1,6 @@
 package com.francis.taratulong.registration.v1;
 
+import com.francis.taratulong.Status;
 import com.francis.taratulong.registration.AttendanceStatus;
 import com.francis.taratulong.registration.Registration;
 import com.francis.taratulong.registration.RegistrationService;
@@ -49,8 +50,18 @@ public class RegistrationController {
             @PathVariable Long eventId,
             @AuthenticationPrincipal AppUser appUser,
             @PageableDefault(size = 20, sort = "appliedAt", direction = Sort.Direction.DESC)Pageable pageable
-            ) {
+    ) {
         Page<Registration> registrationPage = registrationService.getRegistrationsForEvent(eventId, appUser.getId(),pageable);
+        return ResponseEntity.ok(registrationPage.map(registrationMapper::toResponseDTO));
+    }
+
+    @GetMapping("/volunteer")
+    public ResponseEntity<Page<RegistrationResponseDTO>> getRegistrationsForVolunteer(
+            @AuthenticationPrincipal AppUser appUser,
+            @PageableDefault(size = 20, sort = "appliedAt", direction = Sort.Direction.DESC)Pageable pageable,
+            @RequestParam(required = false ) Status status
+    ) {
+        Page<Registration> registrationPage = registrationService.getRegistrationsForVolunteer(appUser.getId(), status , pageable);
         return ResponseEntity.ok(registrationPage.map(registrationMapper::toResponseDTO));
     }
 
