@@ -2,6 +2,7 @@ package com.francis.taratulong.event;
 
 import com.francis.taratulong.exception.EventNotFoundException;
 import com.francis.taratulong.exception.InvalidDateRangeException;
+import com.francis.taratulong.exception.UnauthorizedAccessException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgRepository;
@@ -32,9 +33,13 @@ public class EventService {
         return eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Event not found"));
     }
 
+    public Event getEvent(Long id, String errorMsg) {
+        return eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(errorMsg));
+    }
+
     public Event updateEvent(Long id, Long orgId, Event event){
-        Event eventDB = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Cannot update event. Event not found."));
-        if(!eventDB.getOrganizer().getId().equals(orgId)) throw new UserNotFoundException("Cannot update event. Unauthorized");
+        Event eventDB = getEvent(id,"Cannot update event. Event not found.");
+        checkOwnership(id, orgId, "Cannot update event. Unauthorized");
         eventDB.setTitle(event.getTitle());
         eventDB.setDescription(event.getDescription());
         eventDB.setStartDateTime(event.getStartDateTime());
@@ -46,7 +51,7 @@ public class EventService {
     }
 
     public void deleteEvent(Long id, Long orgId) {
-        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException("Cannot delete event. Event not found."));
+        Event event = getEvent(id, "Cannot delete event. Event not found.");
         if(!event.getOrganizer().getId().equals(orgId)) throw new UserNotFoundException("Cannot delete event. Unauthorized");
         event.setDeleted(true);
     }
@@ -63,5 +68,11 @@ public class EventService {
 
     public Long getOrganizer(Long eventId) {
         return getEvent(eventId).getOrganizer().getId();
+    }
+
+    public void checkOwnership(Long eventId, Long orgId, String errorMsg) {
+        if(!getOrganizer(eventId).equals(orgId)){
+            throw new UnauthorizedAccessException(errorMsg);
+        }
     }
 }
