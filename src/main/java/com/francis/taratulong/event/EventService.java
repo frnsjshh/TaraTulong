@@ -53,7 +53,7 @@ public class EventService {
 
     public void deleteEvent(Long id, Long orgId) {
         Event event = getEvent(id, "Cannot delete event. Event not found.");
-        if(!event.getOrganizer().getId().equals(orgId)) throw new UserNotFoundException("Cannot delete event. Unauthorized");
+        checkOwnership(id, orgId, "Cannot delete event. Unauthorized");
         event.setDeleted(true);
     }
 
