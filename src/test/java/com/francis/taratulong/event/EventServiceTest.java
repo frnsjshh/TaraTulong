@@ -168,7 +168,6 @@ class EventServiceTest {
     @DisplayName("should throw InvalidDateRangeException when start date is after the end date ")
     void shouldThrowWhenStartAfterEnd() {
         //ARRANGE
-        when(orgRepository.findById(100L)).thenReturn(Optional.of(org));
         event.setStartDateTime(LocalDateTime.now().plusDays(2));
         event.setEndDateTime(LocalDateTime.now().plusDays(1));
 
