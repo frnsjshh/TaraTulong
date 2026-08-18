@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.*;
 public class RegistrationController {
     private final RegistrationService registrationService;
     private final RegistrationMapper registrationMapper;
-    private final VolunteerService volunteerService;
 
     @PostMapping
     public ResponseEntity<RegistrationResponseDTO> createRegistration(
@@ -88,7 +87,7 @@ public class RegistrationController {
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentUser
     ) {
-        volunteerService.cancelRegistration(currentUser.getId(), id);
+        registrationService.cancelRegistration(currentUser.getId(), id);
         return ResponseEntity.noContent().build();
     }
 
