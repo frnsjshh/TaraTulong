@@ -9,7 +9,6 @@ import com.francis.taratulong.registration.v1.dto.RegistrationMapper;
 import com.francis.taratulong.registration.v1.dto.RegistrationRequestDTO;
 import com.francis.taratulong.registration.v1.dto.RegistrationResponseDTO;
 import com.francis.taratulong.user.AppUser;
-import com.francis.taratulong.user.volunteer.VolunteerService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
