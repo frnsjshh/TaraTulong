@@ -23,8 +23,8 @@ public class EventService {
 
 
     public Event saveEvent(Long orgId, Event event) {
+        checkDateRangeIfValid(event);
         Org org = orgRepository.findById(orgId).orElseThrow(()->new UserNotFoundException("Cannot create event. Organization not found."));
-        if(event.getStartDateTime().isAfter(event.getEndDateTime())) throw new InvalidDateRangeException("End date must be after the start date");
         event.setOrganizer(org);
         return eventRepository.save(event);
     }
@@ -38,6 +38,7 @@ public class EventService {
     }
 
     public Event updateEvent(Long id, Long orgId, Event event){
+        checkDateRangeIfValid(event);
         Event eventDB = getEvent(id,"Cannot update event. Event not found.");
         checkOwnership(id, orgId, "Cannot update event. Unauthorized");
         eventDB.setTitle(event.getTitle());
@@ -74,5 +75,9 @@ public class EventService {
         if(!getOrganizer(eventId).equals(orgId)){
             throw new UnauthorizedAccessException(errorMsg);
         }
+    }
+
+    public void checkDateRangeIfValid(Event event) {
+        if(event.getStartDateTime().isAfter(event.getEndDateTime())) throw new InvalidDateRangeException("End date must be after the start date");
     }
 }
