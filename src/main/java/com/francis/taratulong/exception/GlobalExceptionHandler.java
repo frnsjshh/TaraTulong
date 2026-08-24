@@ -1,6 +1,7 @@
 package com.francis.taratulong.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -18,6 +20,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiErrorResponse> handleUserExist(UserAlreadyExistsException ex, HttpServletRequest request) {
+        log.warn("User already exists: {} [path={}]", ex.getMessage(), request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
@@ -30,6 +33,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BaseNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleBaseNotFoundException(BaseNotFoundException ex, HttpServletRequest request) {
+        log.warn("Resource not found: {} [path={}]", ex.getMessage(), request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
@@ -42,6 +46,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EventRegistrationClosed.class)
     public ResponseEntity<ApiErrorResponse> handleEventClosed (EventRegistrationClosed ex, HttpServletRequest request) {
+        log.warn("Event registration closed: {} [path={}]", ex.getMessage(), request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
@@ -54,6 +59,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(VolunteerAlreadyRegisteredException.class)
     public ResponseEntity<ApiErrorResponse> handleVolunteerRegistered(VolunteerAlreadyRegisteredException ex, HttpServletRequest request) {
+        log.warn("Duplicate registration: {} [path={}]", ex.getMessage(), request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
@@ -72,6 +78,7 @@ public class GlobalExceptionHandler {
                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
+        log.warn("Validation failed: {} [path={}]", cleanErrorMessage, request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
@@ -84,6 +91,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RegistrationConflictException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalArgument(RegistrationConflictException ex, HttpServletRequest request) {
+        log.warn("Registration conflict: {} [path={}]", ex.getMessage(), request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
@@ -96,6 +104,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedAccessException.class)
     public ResponseEntity<ApiErrorResponse> handleUnauthorizedAccess(UnauthorizedAccessException ex, HttpServletRequest request) {
+        log.warn("Unauthorized access: {} [path={}]", ex.getMessage(), request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.UNAUTHORIZED.value(),
@@ -108,6 +117,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ApiErrorResponse> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex, HttpServletRequest request) {
+        log.error("Optimistic locking failure on path={}: {}", request.getRequestURI(), ex.getMessage());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
@@ -120,6 +130,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidDateRangeException.class)
     public ResponseEntity<ApiErrorResponse> handleInvalidDateRange(InvalidDateRangeException ex, HttpServletRequest request) {
+        log.warn("Invalid date range: {} [path={}]", ex.getMessage(), request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),

@@ -6,10 +6,12 @@ import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -18,11 +20,17 @@ public class VolunteerService {
     private final PasswordEncoder passwordEncoder;
 
     public Volunteer saveVolunteer(Volunteer volunteer) {
+        log.debug("Attempting to save volunteer with email={}", volunteer.getEmail());
         Volunteer existingUser = volunteerRepository.findByEmail(volunteer.getEmail()).orElse(null);
-        if(existingUser!=null) throw new UserAlreadyExistsException("User already exist", existingUser.getEmail());
+        if(existingUser!=null) {
+            log.warn("Volunteer registration denied: email {} already exists", volunteer.getEmail());
+            throw new UserAlreadyExistsException("User already exist", existingUser.getEmail());
+        }
         volunteer.setPassword(passwordEncoder.encode(volunteer.getPassword()));
         volunteer.setRole(Role.VOLUNTEER);
-        return volunteerRepository.save(volunteer);
+        Volunteer saved = volunteerRepository.save(volunteer);
+        log.info("Volunteer created: id={}, email={}", saved.getId(), saved.getEmail());
+        return saved;
     }
 
     public Volunteer getVolunteer(Long id) {
@@ -58,5 +66,6 @@ public class VolunteerService {
         Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete volunteer. Volunteer not found: " + id));
         volunteer.setDeleted(true);
         volunteer.setEmail("DELETED_"+volunteer.getEmail() + "_"+ LocalDateTime.now());
+        log.info("Volunteer soft-deleted: id={}", id);
     }
 }

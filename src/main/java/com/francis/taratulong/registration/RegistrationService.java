@@ -7,6 +7,7 @@ import com.francis.taratulong.exception.*;
 import com.francis.taratulong.user.volunteer.VolunteerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -24,20 +26,26 @@ public class RegistrationService {
 
 
     public Registration saveRegistration(Long volunteerId, Long eventId) {
+        log.debug("Attempting registration: volunteerId={}, eventId={}", volunteerId, eventId);
         Registration registration = new Registration();
         Event event = eventService.getEvent(eventId);
         if(LocalDateTime.now().isAfter(event.getCutOffTime())){
+            log.warn("Registration denied: event {} cutoff has passed", eventId);
             throw new EventRegistrationClosed("Registration for this event has closed.");
         }
         if(event.getSlotsAvailable()<=0){
+            log.warn("Registration denied: event {} has no slots available", eventId);
             throw new EventRegistrationClosed("No slots available for this event.");
         }
         if(registrationRepository.existsByVolunteerIdAndEventId(volunteerId,eventId)) {
+            log.warn("Registration denied: volunteer {} already registered for event {}", volunteerId, eventId);
             throw new VolunteerAlreadyRegisteredException("Error! User already registered for this event.");
         }
         registration.setVolunteer(volunteerService.getVolunteer(volunteerId));
         registration.setEvent(event);
-        return registrationRepository.save(registration);
+        Registration saved = registrationRepository.save(registration);
+        log.info("Registration created: id={}, volunteerId={}, eventId={}", saved.getId(), volunteerId, eventId);
+        return saved;
     }
 
     public Registration getRegistration(Long id) {
@@ -58,6 +66,7 @@ public class RegistrationService {
     //UPDATE ATTENDANCE AS ORG
     // will not accept PENDING as a new status
     public void updateAttendanceStatus(Long eventId, Long org, AttendanceStatus newStatus) {
+        log.debug("Updating attendance: registrationId={}, newStatus={}", eventId, newStatus);
         Registration registration = getRegistration(eventId);
         verifyOrgOwnershipToEvent(org, eventId);
         if(!isApproved(registration)) throw new RegistrationConflictException("Cannot update registration status. Registration not approved.");
@@ -66,9 +75,11 @@ public class RegistrationService {
 
         pointShiftAndRegistrationCounter(newStatus, currentStatus, registration);
         registration.setAttendanceStatus(newStatus);
+        log.info("Attendance updated: registrationId={}, {} -> {}", eventId, currentStatus, newStatus);
     }
 
     public AttendanceStatus cancelRegistration(Long id, Long volunteerId) {
+        log.debug("Attempting cancellation: registrationId={}, volunteerId={}", id, volunteerId);
         Registration registrationDb = getRegistration(id);
         if(!registrationDb.getVolunteer().getId().equals(volunteerId)) throw new UnauthorizedAccessException("Cannot cancel someone else's registration");
         if(!isApproved(registrationDb)) throw new RegistrationConflictException("Cannot cancel registration. Registration not approved.");
@@ -81,6 +92,7 @@ public class RegistrationService {
 
         pointShiftAndRegistrationCounter(cancelStatus, registrationDb.getAttendanceStatus(), registrationDb);
         registrationDb.setAttendanceStatus(cancelStatus);
+        log.info("Registration cancelled: id={}, status={}", id, cancelStatus);
         return cancelStatus;
     }
 
@@ -115,6 +127,7 @@ public class RegistrationService {
     }
 
     public void setApproved(Long id, Long orgId){
+        log.debug("Attempting to approve registration: id={}, orgId={}", id, orgId);
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot approve registration. Registration not found."));
         Event event = registrationDb.getEvent();
         verifyOrgOwnershipToRegistration(registrationDb, orgId);
@@ -127,9 +140,11 @@ public class RegistrationService {
         }
         registrationDb.setRegistrationStatus(Status.APPROVED);
         event.setSlotsAvailable(event.getSlotsAvailable()-1);
+        log.info("Registration approved: id={}, remainingSlots={}", id, event.getSlotsAvailable());
     }
 
     public void setRejected(Long id, Long orgId){
+        log.debug("Attempting to reject registration: id={}, orgId={}", id, orgId);
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()-> new RegistrationNotFoundException("Cannot set registration as present. Registration not found."));
         verifyOrgOwnershipToRegistration(registrationDb, orgId);
 
@@ -142,11 +157,11 @@ public class RegistrationService {
             event.setSlotsAvailable(event.getSlotsAvailable()+1);
         }
         registrationDb.setRegistrationStatus(Status.REJECTED);
-
-
+        log.info("Registration rejected: id={}", id);
     }
 
     public void deleteRegistration(Long id, Long volunteerId) {
+        log.debug("Attempting to delete registration: id={}, volunteerId={}", id, volunteerId);
         Registration registrationDb = registrationRepository.findById(id).orElseThrow(()->new RegistrationNotFoundException("Cannot delete registration. Registration not found."));
         if(!Objects.equals(volunteerId, registrationDb.getVolunteer().getId())) throw new UnauthorizedAccessException ("Cannot delete registration. Unauthorized");
         if(isApproved(registrationDb)){
@@ -154,11 +169,13 @@ public class RegistrationService {
             event.setSlotsAvailable(event.getSlotsAvailable()+1);
         }
         registrationRepository.deleteById(id);
+        log.info("Registration deleted: id={}", id);
     }
 
 
     private void verifyOrgOwnershipToRegistration(Registration registration, Long orgId) {
         if (!registration.getEvent().getOrganizer().getId().equals(orgId)) {
+            log.warn("Unauthorized access: orgId={} tried to act on registration for event owned by orgId={}", orgId, registration.getEvent().getOrganizer().getId());
             throw new UnauthorizedAccessException("Unauthorized action for this event.");
         }
     }
