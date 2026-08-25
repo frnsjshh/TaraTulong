@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -61,11 +60,4 @@ public class VolunteerService {
         volunteer.setTrustScore(volunteer.getTrustScore() + score);
     }
 
-
-    public void deleteVolunteer(Long id) {
-        Volunteer volunteer = volunteerRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete volunteer. Volunteer not found: " + id));
-        volunteer.setDeleted(true);
-        volunteer.setEmail("DELETED_"+volunteer.getEmail() + "_"+ LocalDateTime.now());
-        log.info("Volunteer soft-deleted: id={}", id);
-    }
 }

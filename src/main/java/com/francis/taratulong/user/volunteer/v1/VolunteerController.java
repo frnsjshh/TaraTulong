@@ -1,6 +1,7 @@
 package com.francis.taratulong.user.volunteer.v1;
 
 import com.francis.taratulong.user.AppUser;
+import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.volunteer.VolunteerService;
 import com.francis.taratulong.user.volunteer.v1.dto.VolunteerMapper;
 import com.francis.taratulong.user.volunteer.v1.dto.VolunteerRequestDTO;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class VolunteerController {
     private final VolunteerService volunteerService;
+    private final AppUserService appUserService;
     private final VolunteerMapper volunteerMapper;
 
     @PostMapping
@@ -49,7 +51,7 @@ public class VolunteerController {
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal AppUser appUser) {
-        volunteerService.deleteVolunteer(appUser.getId());
+        appUserService.deleteUser(appUser.getId());
         return ResponseEntity.noContent().build();
     }
 

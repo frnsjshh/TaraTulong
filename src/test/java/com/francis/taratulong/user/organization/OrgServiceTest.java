@@ -171,35 +171,6 @@ class OrgServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // deleteOrg
-    // ══════════════════════════════════════════════════════════════════
-    @Nested
-    @DisplayName("deleteOrg")
-    class DeleteOrg {
-
-        @Test
-        @DisplayName("should soft-delete by setting deleted=true")
-        void happyPath() {
-            when(orgRepository.findById(100L)).thenReturn(Optional.of(org));
-
-            orgService.deleteOrg(100L);
-
-            assertTrue(org.isDeleted());
-        }
-
-        @Test
-        @DisplayName("should throw UserNotFoundException when org doesn't exist")
-        void shouldThrowWhenNotFound() {
-            when(orgRepository.findById(999L)).thenReturn(Optional.empty());
-
-            assertThrows(
-                    UserNotFoundException.class,
-                    () -> orgService.deleteOrg(999L)
-            );
-        }
-    }
-
-    // ══════════════════════════════════════════════════════════════════
     // orgExist
     // ══════════════════════════════════════════════════════════════════
     @Nested

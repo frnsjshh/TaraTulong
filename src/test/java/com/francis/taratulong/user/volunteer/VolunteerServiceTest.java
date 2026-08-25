@@ -188,44 +188,6 @@ class VolunteerServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // deleteVolunteer
-    // ══════════════════════════════════════════════════════════════════
-    @Nested
-    @DisplayName("deleteVolunteer")
-    class DeleteVolunteer {
-
-        // ──────────────────────────────────────────────────────────────
-        // CONCEPT: Soft Delete
-        //
-        // The service doesn't physically remove the record. It sets
-        // deleted=true and mangles the email to free it up for
-        // future registrations. We verify BOTH behaviors.
-        // ──────────────────────────────────────────────────────────────
-        @Test
-        @DisplayName("should soft-delete by setting deleted=true and mangling email")
-        void happyPath() {
-            when(volunteerRepository.findById(1L)).thenReturn(Optional.of(volunteer));
-
-            volunteerService.deleteVolunteer(1L);
-
-            assertTrue(volunteer.isDeleted());
-            assertTrue(volunteer.getEmail().startsWith("DELETED_"));
-            assertTrue(volunteer.getEmail().contains("juan@email.com"));
-        }
-
-        @Test
-        @DisplayName("should throw UserNotFoundException when volunteer doesn't exist")
-        void shouldThrowWhenNotFound() {
-            when(volunteerRepository.findById(999L)).thenReturn(Optional.empty());
-
-            assertThrows(
-                    UserNotFoundException.class,
-                    () -> volunteerService.deleteVolunteer(999L)
-            );
-        }
-    }
-
-    // ══════════════════════════════════════════════════════════════════
     // Stat Update Methods
     //
     // These methods apply DELTA values (not absolute values).

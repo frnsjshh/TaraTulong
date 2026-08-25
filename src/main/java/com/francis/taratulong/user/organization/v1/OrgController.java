@@ -1,5 +1,6 @@
 package com.francis.taratulong.user.organization.v1;
 
+import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.organization.OrgService;
 import com.francis.taratulong.user.organization.v1.dto.OrgMapper;
 import com.francis.taratulong.user.organization.v1.dto.OrgRequestDTO;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 @RequiredArgsConstructor
 public class OrgController {
     private final OrgService orgService;
+    private final AppUserService appUserService;
     private final OrgMapper orgMapper;
 
 
@@ -50,7 +52,7 @@ public class OrgController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrg(@PathVariable Long id) {
-        orgService.deleteOrg(id);
+        appUserService.deleteUser(id);
 
         return ResponseEntity.noContent().build();
     }

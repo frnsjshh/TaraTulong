@@ -1,6 +1,7 @@
 package com.francis.taratulong.user.admin.v1;
 
 import com.francis.taratulong.user.AppUser;
+import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.admin.AdminService;
 import com.francis.taratulong.user.admin.v1.dto.AdminMapper;
 import com.francis.taratulong.user.admin.v1.dto.AdminRequestDTO;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AdminController {
     private final AdminService adminService;
+    private final AppUserService appUserService;
     private final AdminMapper adminMapper;
 
     @PostMapping
@@ -64,7 +66,7 @@ public class AdminController {
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteAdmin(@AuthenticationPrincipal AppUser appUser){
-        adminService.deleteAdmin(appUser.getId());
+        appUserService.deleteUser(appUser.getId());
         return ResponseEntity.noContent().build();
     }
 }
