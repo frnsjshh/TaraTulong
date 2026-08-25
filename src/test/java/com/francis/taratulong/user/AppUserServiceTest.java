@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -112,27 +113,6 @@ class AppUserServiceTest {
             verify(passwordEncoder).encode("newPassword");
         }
 
-        // ──────────────────────────────────────────────────────────────
-        // CONCEPT: Silent failure vs throwing
-        //
-        // Notice: updatePassword does NOT throw when the current
-        // password is wrong — it just silently does nothing.
-        // This is a design choice (arguably debatable).
-        // We test that the password remains UNCHANGED.
-        // ──────────────────────────────────────────────────────────────
-        @Test
-        @DisplayName("should NOT change password when current password doesn't match")
-        void shouldNotChangeWhenWrongCurrentPassword() {
-            when(appUserRepository.findById(1L)).thenReturn(Optional.of(appUser));
-            when(passwordEncoder.matches("wrongPassword", "encodedCurrentPassword")).thenReturn(false);
-
-            appUserService.updatePassword(1L, "wrongPassword", "newPassword");
-
-            // Password should remain unchanged
-            assertEquals("encodedCurrentPassword", appUser.getPassword());
-            // encode() should never be called since the match failed
-            verify(passwordEncoder, never()).encode(anyString());
-        }
 
         @Test
         @DisplayName("should throw UserNotFoundException when user doesn't exist")
@@ -143,6 +123,21 @@ class AppUserServiceTest {
                     UserNotFoundException.class,
                     () -> appUserService.updatePassword(999L, "current", "new")
             );
+        }
+        @Test
+        @DisplayName("should throw BadCredentialsException when current password doesn't match")
+        void shouldThrowWhenBadCredentials() {
+            when(appUserRepository.findById(1L)).thenReturn(Optional.of(appUser));
+            when(passwordEncoder.matches("wrongPassword", "encodedCurrentPassword")).thenReturn(false);
+
+            assertThrows(
+                    BadCredentialsException.class,
+                    () -> appUserService.updatePassword(1L, "wrongPassword", "new")
+            );
+            // Password should remain unchanged
+            assertEquals("encodedCurrentPassword", appUser.getPassword());
+            // encode() should never be called since the match failed
+            verify(passwordEncoder, never()).encode(anyString());
         }
     }
 }
