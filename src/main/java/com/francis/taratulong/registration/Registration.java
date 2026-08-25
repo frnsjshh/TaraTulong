@@ -40,6 +40,7 @@ public class Registration {
     @Column(nullable = false)
     private Status registrationStatus = Status.PENDING;
 
+    @Enumerated(EnumType.STRING)
     private AttendanceStatus attendanceStatus;
 
     @Column()
