@@ -9,7 +9,6 @@ import com.francis.taratulong.registration.v1.dto.RegistrationMapper;
 import com.francis.taratulong.registration.v1.dto.RegistrationRequestDTO;
 import com.francis.taratulong.registration.v1.dto.RegistrationResponseDTO;
 import com.francis.taratulong.user.AppUser;
-import com.francis.taratulong.user.volunteer.VolunteerService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 public class RegistrationController {
     private final RegistrationService registrationService;
     private final RegistrationMapper registrationMapper;
-    private final VolunteerService volunteerService;
 
     @PostMapping
     public ResponseEntity<RegistrationResponseDTO> createRegistration(
@@ -88,7 +86,7 @@ public class RegistrationController {
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentUser
     ) {
-        volunteerService.cancelRegistration(currentUser.getId(), id);
+        registrationService.cancelRegistration(currentUser.getId(), id);
         return ResponseEntity.noContent().build();
     }
 

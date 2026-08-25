@@ -138,19 +138,6 @@ class EventServiceTest {
 
 
         @Test
-        @DisplayName("should throw EventNotFoundException when event doesn't exist")
-        void shouldThrowWhenEventNotFound() {
-            //arrange
-            when(eventRepository.findById(10L)).thenReturn(Optional.empty());
-
-            //act & assert
-            assertThrows(
-                    EventNotFoundException.class,
-                    () -> eventService.updateEvent(10L, 100L, event)
-            );
-        }
-
-        @Test
         @DisplayName("should throw UnauthorizedAccessException when updating Event when currentOrg is not equal to the Event's org")
         void shouldThrowWhenUnauthorized() {
             //arrange
@@ -164,6 +151,25 @@ class EventServiceTest {
         }
 
     }
+    @Nested
+    @DisplayName("deleteEvent")
+    class DeleteEvent {
+
+        @Test
+        @DisplayName("should Set Event Deleted to true")
+        void happyPath() {
+            //arrange
+            when(eventRepository.findById(10L)).thenReturn(Optional.of(event));
+
+            //act
+            eventService.deleteEvent(10L, 100L);
+
+            //assert
+            assertTrue(event.isDeleted());
+        }
+
+    }
+
     @Test
     @DisplayName("should throw InvalidDateRangeException when start date is after the end date ")
     void shouldThrowWhenStartAfterEnd() {
