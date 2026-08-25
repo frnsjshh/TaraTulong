@@ -5,6 +5,7 @@ import com.francis.taratulong.exception.UserNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,11 +31,13 @@ public class AppUserService {
     public void updatePassword(Long id, String currentPassword, String password) {
         log.debug("Attempting password update for userId={}", id);
         AppUser appUser = appUserRepository.findById(id).orElseThrow(()->new UserNotFoundException("Cannot change password. User not found"));
+
         if(passwordEncoder.matches(currentPassword, appUser.getPassword())) {
             appUser.setPassword(passwordEncoder.encode(password));
             log.info("Password updated for userId={}", id);
         } else {
             log.warn("Password update failed for userId={}: current password mismatch", id);
+            throw new BadCredentialsException("Cannot change password. Current password mismatch");
         }
     }
 
