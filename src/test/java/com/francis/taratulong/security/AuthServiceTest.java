@@ -16,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,7 +63,10 @@ class AuthServiceTest {
             // ARRANGE
             // authenticationManager.authenticate() returns void on success
             // (it throws on failure), so we don't need when(...).thenReturn(...)
-            when(appUserRepository.findByEmail("user@email.com")).thenReturn(Optional.of(appUser));
+            Authentication authentication = mock(Authentication.class);
+
+            when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
+            when(authentication.getPrincipal()).thenReturn(appUser);
             when(jwtService.generateToken(appUser)).thenReturn("jwt.token.here");
 
             // ACT
