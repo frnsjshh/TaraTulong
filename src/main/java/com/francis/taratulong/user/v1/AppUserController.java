@@ -8,10 +8,7 @@ import com.francis.taratulong.user.v1.dto.AppUserRequestEmailDTO;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "User")
 @RestController
@@ -24,7 +21,7 @@ public class AppUserController {
     }
 
 
-    @PatchMapping("/password")
+    @PutMapping("/password")
     public ResponseEntity<Void> updatePassword(@AuthenticationPrincipal AppUser appUser, @RequestBody AppUserRequestPasswordDTO requestDTO) {
         appUserService.updatePassword(appUser.getId(), requestDTO.currentPassword(),requestDTO.password());
         return ResponseEntity.noContent().build();
