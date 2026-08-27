@@ -109,12 +109,12 @@ public class GlobalExceptionHandler {
         log.warn("Unauthorized access: {} [path={}]", ex.getMessage(), request.getRequestURI());
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(
                 LocalDateTime.now(),
-                HttpStatus.UNAUTHORIZED.value(),
-                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
-        return new ResponseEntity<>(apiErrorResponse, HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
