@@ -140,4 +140,36 @@ class AppUserServiceTest {
             verify(passwordEncoder, never()).encode(anyString());
         }
     }
+
+    // ══════════════════════════════════════════════════════════════════
+    // deleteUser
+    // ══════════════════════════════════════════════════════════════════
+    @Nested
+    @DisplayName("deleteUser")
+    class DeleteUser {
+
+        @Test
+        @DisplayName("should soft-delete by setting deleted=true, mangling email, and scrubbing password")
+        void happyPath() {
+            when(appUserRepository.findById(1L)).thenReturn(Optional.of(appUser));
+
+            appUserService.deleteUser(1L);
+
+            assertTrue(appUser.isDeleted());
+            assertTrue(appUser.getEmail().startsWith("DELETED_"));
+            assertTrue(appUser.getEmail().contains("user@email.com"));
+            assertNull(appUser.getPassword());
+        }
+
+        @Test
+        @DisplayName("should throw UserNotFoundException when user doesn't exist")
+        void shouldThrowWhenNotFound() {
+            when(appUserRepository.findById(999L)).thenReturn(Optional.empty());
+
+            assertThrows(
+                    UserNotFoundException.class,
+                    () -> appUserService.deleteUser(999L)
+            );
+        }
+    }
 }

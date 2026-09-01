@@ -172,35 +172,6 @@ class AdminServiceTest {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // deleteAdmin
-    // ══════════════════════════════════════════════════════════════════
-    @Nested
-    @DisplayName("deleteAdmin")
-    class DeleteAdmin {
-
-        @Test
-        @DisplayName("should soft-delete by setting deleted=true")
-        void happyPath() {
-            when(adminRepository.findById(1L)).thenReturn(Optional.of(admin));
-
-            adminService.deleteAdmin(1L);
-
-            assertTrue(admin.isDeleted());
-        }
-
-        @Test
-        @DisplayName("should throw UserNotFoundException when admin doesn't exist")
-        void shouldThrowWhenNotFound() {
-            when(adminRepository.findById(999L)).thenReturn(Optional.empty());
-
-            assertThrows(
-                    UserNotFoundException.class,
-                    () -> adminService.deleteAdmin(999L)
-            );
-        }
-    }
-
-    // ══════════════════════════════════════════════════════════════════
     // approveOrg
     // ══════════════════════════════════════════════════════════════════
     @Nested

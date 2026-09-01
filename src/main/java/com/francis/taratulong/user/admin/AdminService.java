@@ -45,12 +45,6 @@ public class AdminService {
         return adminDB;
     }
 
-    public void deleteAdmin(Long id) {
-        Admin admin = adminRepository.findById(id).orElseThrow(()-> new UserNotFoundException("Cannot delete user. User not found."));
-        admin.setDeleted(true);
-        log.info("Admin soft-deleted: id={}", id);
-    }
-
     public void approveOrg(Long adminID, Long orgID) {
         Org org = orgService.getOrg(orgID);
         org.setStatus(Status.APPROVED);

@@ -3,7 +3,7 @@ package com.francis.taratulong.exception;
 import lombok.Getter;
 
 @Getter
-public class UserAlreadyExistsException extends BaseNotFoundException {
+public class UserAlreadyExistsException extends RuntimeException {
     String attemptedEmail;
     public UserAlreadyExistsException(String message, String attemptedEmail) {
         super(message);
