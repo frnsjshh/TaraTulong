@@ -12,8 +12,22 @@ on:
 
 jobs:
   build-and-test:
-
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: taratulong_ci
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
 
@@ -28,6 +42,13 @@ jobs:
           cache: maven
 
       - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: taratulong_ci
+          DB_USERNAME: ci_user
+          DB_PASSWORD: ci_password
+          JWT_SECRET: ci-test-secret
         run: ./mvnw test
 
       - name: Build application
