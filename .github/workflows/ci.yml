@@ -9,6 +9,9 @@ on:
   pull_request:
     branches:
       - main
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build-and-test:
@@ -53,4 +56,17 @@ jobs:
 
 
       - name: Build Docker image
-        run: docker build -t taratulong-api .
+        run: docker build -t taratulong-api:ci .
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag Docker image
+        run: docker tag taratulong-api:ci ghcr.io/${{ github.repository_owner }}/taratulong-api:ci
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository_owner }}/taratulong-api:ci
