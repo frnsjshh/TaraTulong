@@ -51,8 +51,6 @@ jobs:
           JWT_SECRET: ci-test-secret
         run: ./mvnw test
 
-      - name: Build application
-        run: ./mvnw package -DskipTests
 
       - name: Build Docker image
         run: docker build -t taratulong-api .
