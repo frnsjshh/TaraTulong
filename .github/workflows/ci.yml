@@ -65,8 +65,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get short commit SHA
+        id: short_sha
+        run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - name: Tag Docker image
-        run: docker tag taratulong-api:ci ghcr.io/${{ github.repository_owner }}/taratulong-api:ci
+        run: docker tag taratulong-api:ci ghcr.io/${{ github.repository_owner }}/taratulong-api:${{ steps.short_sha.outputs.sha }}
 
       - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository_owner }}/taratulong-api:ci
+        run: docker push ghcr.io/${{ github.repository_owner }}/taratulong-api:${{ steps.short_sha.outputs.sha }}
