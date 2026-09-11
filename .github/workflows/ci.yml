@@ -88,4 +88,5 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "Deploying image tag: ${{ needs.build-and-test.outputs.image_tag }}"
+            IMAGE_TAG=${{ needs.build-and-test.outputs.image_tag }} docker compose pull taratulong-api
+            IMAGE_TAG=${{ needs.build-and-test.outputs.image_tag }} docker compose up -d taratulong-api
