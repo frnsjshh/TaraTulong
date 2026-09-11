@@ -89,5 +89,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/taratulong
-            IMAGE_TAG=${{ needs.build-and-test.outputs.image_tag }} docker compose pull taratulong-api
-            IMAGE_TAG=${{ needs.build-and-test.outputs.image_tag }} docker compose up -d taratulong-api
+            IMAGE_TAG=${{ needs.build-and-test.outputs.image_tag }} docker compose pull taratulong_api
+            IMAGE_TAG=${{ needs.build-and-test.outputs.image_tag }} docker compose up -d taratulong_api
