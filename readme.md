@@ -12,8 +12,8 @@
 
 ## Live Demo
 
-- **Swagger UI:** `http://<YOUR-EC2-PUBLIC-IP-OR-DOMAIN>:8080/swagger-ui.html`
-- **Base API URL:** `http://<YOUR-EC2-PUBLIC-IP-OR-DOMAIN>:8080/api/v1`
+- **Swagger UI:** `http://13.251.90.175:8080/swagger-ui.html`
+- **Base API URL:** `http://13.251.90.175:8080/api/v1`
 
 *Replace the placeholder with your EC2 public IP, or better, an Elastic IP / Route 53 domain so the link survives an instance restart. If you stop the instance between demos to manage cost, say so here — e.g. "offline right now to save on AWS costs — message me and I'll have it up in under a minute."*
 
