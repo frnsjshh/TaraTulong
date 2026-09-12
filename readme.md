@@ -544,4 +544,4 @@ The deploy job runs only after a successful build-and-test, and uses repository 
 
 ## Contact
 
-Built by **[Francis Joshua Gacutno]** — [francisjoshuagacutno@gmail.com](mailto:francisjoshuagacutno@gmail.com) · [LinkedIn]([https://linkedin.com/in/your-profile](https://www.linkedin.com/in/francis-joshua-gacutno-518470372/)) · [GitHub](https://github.com/frnsjshh)
+Built by **Francis Joshua Gacutno** — [francisjoshuagacutno@gmail.com](mailto:francisjoshuagacutno@gmail.com) · [LinkedIn](https://linkedin.com/in/your-profile](https://www.linkedin.com/in/francis-joshua-gacutno-518470372/) · [GitHub](https://github.com/frnsjshh)
