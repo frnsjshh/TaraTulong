@@ -15,6 +15,8 @@
 - **Swagger UI:** `http://13.251.90.175:8080/swagger-ui.html`
 - **Base API URL:** `http://13.251.90.175:8080/api/v1`
 
+*Replace the placeholder with your EC2 public IP, or better, an Elastic IP / Route 53 domain so the link survives an instance restart. If you stop the instance between demos to manage cost, say so here — e.g. "offline right now to save on AWS costs — message me and I'll have it up in under a minute."*
+
 ## Highlights
 
 - Modeled a five-state registration lifecycle as an explicit state machine rather than loose strings — every transition triggers slot, trust-score, and attendance-stat updates
@@ -544,4 +546,4 @@ The deploy job runs only after a successful build-and-test, and uses repository 
 
 ## Contact
 
-Built by **Francis Joshua Gacutno** — [francisjoshuagacutno@gmail.com](mailto:francisjoshuagacutno@gmail.com) · [LinkedIn](https://linkedin.com/in/your-profile](https://www.linkedin.com/in/francis-joshua-gacutno-518470372/) · [GitHub](https://github.com/frnsjshh)
+Built by **[Francis Joshua Gacutno]** — [francisjoshuagacutno@gmail.com](mailto:francisjoshuagacutno@gmail.com) · [LinkedIn]([https://linkedin.com/in/your-profile](https://www.linkedin.com/in/francis-joshua-gacutno-518470372/)) · [GitHub](https://github.com/frnsjshh)
