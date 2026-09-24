@@ -14,8 +14,10 @@ public class Location {
     private String code;
     @Column(nullable = false)
     private String name;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String type;
+    private LocationType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
