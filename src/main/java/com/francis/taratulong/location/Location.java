@@ -23,8 +23,9 @@ public class Location {
     private LocationType type;
 
 
-    private int regionId = 0;
-    private int municipalityId = 0;
+    private int regionId;
+    private int provinceId;
+    private int municipalityId;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Location parent;
