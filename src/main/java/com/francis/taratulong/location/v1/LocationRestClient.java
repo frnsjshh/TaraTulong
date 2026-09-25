@@ -9,6 +9,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.ArrayList;
+
 import java.util.List;
 
 @Component
@@ -48,17 +50,17 @@ public class LocationRestClient {
         }
     }
 
-    public List<PsgcResponseDTO> fetchProvinces(int regionId) {
+    public List<PsgcResponseDTO> fetchProvinces() {
         log.info("Fetching provinces from PSGC API");
         try {
             PsgcApiResponse<PsgcResponseDTO> response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/provinces")
                             .queryParam("token", apiKey)
-                            .queryParam("region", regionId)
                             .build())
                     .retrieve()
                     .body(new ParameterizedTypeReference<PsgcApiResponse<PsgcResponseDTO>>() {});
+
             List<PsgcResponseDTO> provinces = (response != null && response.results() != null)
                     ? response.results()
                     : List.of();
@@ -70,19 +72,43 @@ public class LocationRestClient {
         }
     }
 
-    public List<PsgcResponseDTO> restRequest(String path, String queryParam, String arg) {
-        PsgcApiResponse<PsgcResponseDTO> apiResponse = restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path(path)
-                        .queryParam("token", apiKey)
-                        .queryParam(queryParam, arg)
-                        .build())
-                .retrieve()
-                .body(new ParameterizedTypeReference<PsgcApiResponse<PsgcResponseDTO>>() {});
-        return (apiResponse != null && apiResponse.results() != null)
-                ? apiResponse.results()
-                : List.of();
+    public List<PsgcResponseDTO> fetchMunicipalities() {
+        log.info("Fetching municipalities from PSGC API");
+        try {
+            List<PsgcResponseDTO> allMunicipalities = new ArrayList<>();
+
+            PsgcApiResponse<PsgcResponseDTO> response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/municipalities")
+                            .queryParam("token", apiKey)
+                            .build())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<PsgcApiResponse<PsgcResponseDTO>>() {});
+
+            while (response != null) {
+                if (response.results() != null) {
+                    allMunicipalities.addAll(response.results());
+                }
+
+                String nextUrl = response.next();
+                if (nextUrl == null || nextUrl.isBlank()) {
+                    break;
+                }
+
+                response = restClient.get()
+                        .uri(nextUrl)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<PsgcApiResponse<PsgcResponseDTO>>() {});
+            }
+
+            log.info("Successfully fetched {} municipalities from PSGC API", allMunicipalities.size());
+            return allMunicipalities;
+        } catch (Exception e) {
+            log.error("Error fetching municipality from PSGC API: {}", e.getMessage(), e);
+            throw e;
+        }
     }
+
 
 
 
