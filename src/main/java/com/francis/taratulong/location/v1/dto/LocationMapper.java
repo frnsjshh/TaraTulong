@@ -1,15 +1,16 @@
 package com.francis.taratulong.location.v1.dto;
 
 import com.francis.taratulong.location.Location;
+import com.francis.taratulong.location.LocationType;
 
 public class LocationMapper {
-    public static Location toEntity(PsgcResponseDTO psgcResponseDTO) {
+    public static Location toEntity(PsgcResponseDTO psgcResponseDTO, LocationType locationType) {
         Location location = new Location();
         location.setName(psgcResponseDTO.areaName());
         location.setCode(psgcResponseDTO.code());
-        location.setRegionId(psgcResponseDTO.reg());
-        location.setProvinceId(psgcResponseDTO.prv());
-        location.setMunicipalityId(psgcResponseDTO.mun());
+        location.setType(locationType);
         return location;
     }
+
+
 }
