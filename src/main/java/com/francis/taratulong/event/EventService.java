@@ -1,9 +1,13 @@
 package com.francis.taratulong.event;
 
+import com.francis.taratulong.category.Category;
+import com.francis.taratulong.category.CategoryService;
 import com.francis.taratulong.exception.EventNotFoundException;
 import com.francis.taratulong.exception.InvalidDateRangeException;
 import com.francis.taratulong.exception.UnauthorizedAccessException;
 import com.francis.taratulong.exception.UserNotFoundException;
+import com.francis.taratulong.location.Location;
+import com.francis.taratulong.location.LocationService;
 import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgRepository;
 import jakarta.transaction.Transactional;
@@ -15,6 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 @Slf4j
 @Service
 @Transactional
@@ -22,13 +30,26 @@ import org.springframework.stereotype.Service;
 public class EventService {
     private final EventRepository eventRepository;
     private final OrgRepository orgRepository;
+    private final LocationService locationService;
+    private final CategoryService categoryService;
 
 
-    public Event saveEvent(Long orgId, Event event) {
+    public Event saveEvent(Long orgId, Event event, UUID locationId, Set<String> categoryNames) {
         log.debug("Attempting to save event for orgId={}", orgId);
         checkDateRangeIfValid(event);
         Org org = orgRepository.findById(orgId).orElseThrow(()->new UserNotFoundException("Cannot create event. Organization not found."));
         event.setOrganizer(org);
+
+        // Resolve location
+        if (locationId != null) {
+            Location location = locationService.getLocationById(locationId, "Cannot create event. Location not found.");
+            event.setLocation(location);
+        }
+
+        // Resolve categories (find-or-create)
+        Set<Category> categories = categoryService.resolveCategories(categoryNames);
+        event.setCategories(categories);
+
         Event saved = eventRepository.save(event);
         log.info("Event created: id={}, title='{}', orgId={}", saved.getId(), saved.getTitle(), orgId);
         return saved;
@@ -42,7 +63,7 @@ public class EventService {
         return eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(errorMsg));
     }
 
-    public Event updateEvent(Long id, Long orgId, Event event){
+    public Event updateEvent(Long id, Long orgId, Event event, UUID locationId, Set<String> categoryNames){
         log.debug("Attempting to update eventId={} by orgId={}", id, orgId);
         checkDateRangeIfValid(event);
         Event eventDB = getEvent(id,"Cannot update event. Event not found.");
@@ -52,8 +73,18 @@ public class EventService {
         eventDB.setStartDateTime(event.getStartDateTime());
         eventDB.setEndDateTime(event.getEndDateTime());
         eventDB.setCutOffTime(event.getCutOffTime());
-        eventDB.setLocation(event.getLocation());
         eventDB.setSlotsAvailable(event.getSlotsAvailable());
+
+        // Resolve location
+        if (locationId != null) {
+            Location location = locationService.getLocationById(locationId, "Cannot update event. Location not found.");
+            eventDB.setLocation(location);
+        }
+
+        // Resolve categories (find-or-create)
+        Set<Category> categories = categoryService.resolveCategories(categoryNames);
+        eventDB.setCategories(categories);
+
         log.info("Event updated: id={}, title='{}'", id, eventDB.getTitle());
         return eventDB;
     }
@@ -74,6 +105,31 @@ public class EventService {
     public Page<Event> getAllEvents(int page, int size) {
             Pageable pageable = PageRequest.of(page, size, Sort.by("startDateTime").descending());
             return eventRepository.findAll(pageable);
+    }
+
+    /**
+     * Search/filter events by location hierarchy and/or categories.
+     * All parameters are optional — null means "don't filter by this".
+     */
+    public Page<Event> searchEvents(UUID locationId, UUID provinceId, UUID regionId,
+                                     List<String> categoryNames, int page, int size) {
+        log.debug("Searching events: locationId={}, provinceId={}, regionId={}, categories={}, page={}, size={}",
+                locationId, provinceId, regionId, categoryNames, page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("startDateTime").descending());
+
+        // Normalize category names if present
+        List<String> normalizedCategories = null;
+        if (categoryNames != null && !categoryNames.isEmpty()) {
+            normalizedCategories = categoryNames.stream()
+                    .map(categoryService::normalizeName)
+                    .filter(name -> !name.isEmpty())
+                    .toList();
+            if (normalizedCategories.isEmpty()) {
+                normalizedCategories = null;
+            }
+        }
+
+        return eventRepository.searchEvents(locationId, provinceId, regionId, normalizedCategories, pageable);
     }
 
     public Long getOrganizer(Long eventId) {

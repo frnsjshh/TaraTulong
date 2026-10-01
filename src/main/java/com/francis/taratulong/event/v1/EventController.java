@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.UUID;
+
 @Tag(name = "Event")
 @RestController
 @RequestMapping("api/v1/events")
@@ -28,7 +31,14 @@ public class EventController {
             @Valid @RequestBody EventRequestDTO requestDTO,
             @AuthenticationPrincipal AppUser currentOrg) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                eventMapper.toResponseDTO(eventService.saveEvent(currentOrg.getId(), eventMapper.toEntity(requestDTO)))
+                eventMapper.toResponseDTO(
+                        eventService.saveEvent(
+                                currentOrg.getId(),
+                                eventMapper.toEntity(requestDTO),
+                                requestDTO.locationId(),
+                                requestDTO.categories()
+                        )
+                )
         );
     }
     @GetMapping
@@ -55,12 +65,48 @@ public class EventController {
         return ResponseEntity.ok(eventMapper.toResponseDTO(eventService.getEvent(id)));
     }
 
+    /**
+     * Search/filter events by location hierarchy and/or categories.
+     * All query params are optional — omit to skip that filter.
+     *
+     * @param locationId   filter by exact city/municipality UUID
+     * @param provinceId   filter by province UUID (includes all cities under it)
+     * @param regionId     filter by region UUID (includes all provinces and cities under it)
+     * @param categoryNames filter by category names (OR logic), comma-separated
+     * @param page         page number (0-indexed)
+     * @param size         page size
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<EventResponseDTO>> searchEvents(
+            @RequestParam(required = false) UUID locationId,
+            @RequestParam(required = false) UUID provinceId,
+            @RequestParam(required = false) UUID regionId,
+            @RequestParam(required = false) List<String> categoryNames,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Page<Event> eventPage = eventService.searchEvents(
+                locationId, provinceId, regionId, categoryNames, page, size
+        );
+        return ResponseEntity.ok(eventPage.map(eventMapper::toResponseDTO));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<EventResponseDTO> updateEvent(
             @PathVariable Long id,
             @AuthenticationPrincipal AppUser currentOrg,
             @Valid@RequestBody EventRequestDTO requestDTO){
-        return ResponseEntity.ok(eventMapper.toResponseDTO(eventService.updateEvent(id, currentOrg.getId(), eventMapper.toEntity(requestDTO))));
+        return ResponseEntity.ok(
+                eventMapper.toResponseDTO(
+                        eventService.updateEvent(
+                                id,
+                                currentOrg.getId(),
+                                eventMapper.toEntity(requestDTO),
+                                requestDTO.locationId(),
+                                requestDTO.categories()
+                        )
+                )
+        );
     }
 
     @DeleteMapping("/{id}")
