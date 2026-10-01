@@ -110,6 +110,35 @@ public class LocationRestClient {
     }
 
 
+    public List<PsgcResponseDTO> fetchAllLocations() {
+        try {
+            log.info("Fetching all locations from PSGC API");
+            PsgcApiResponse<PsgcResponseDTO> response;
+            List<PsgcResponseDTO> allLocations = new ArrayList<>();
+            int page = 1;
+            do{
+                final int currentPage = page;
+                response = restClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/all")
+                                .queryParam("token", apiKey)
+                                .queryParam("page", currentPage)
+                                .build())
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<PsgcApiResponse<PsgcResponseDTO>>() {
+                        });
+                if (response == null || response.results() == null) throw new IllegalStateException("Response is null");
+                allLocations.addAll(response.results());
+                page++;
+            } while (response.next() != null);
+
+            log.info("Successfully fetched {} locations from PSGC API", allLocations.size());
+            return allLocations;
+        } catch (Exception e) {
+            log.error("Error fetching locations from PSGC API: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
 
 
 

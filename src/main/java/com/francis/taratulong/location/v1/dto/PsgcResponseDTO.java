@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record PsgcResponseDTO(
         String code,
         @JsonProperty("area_name") String areaName,
+        @JsonProperty("geographic_level") String geographicLevel,
         int reg,
         int prv,
         int mun

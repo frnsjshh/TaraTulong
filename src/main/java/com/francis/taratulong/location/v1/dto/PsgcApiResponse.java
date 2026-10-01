@@ -6,9 +6,7 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PsgcApiResponse<T>(
-        int count,
         String next,
-        String previous,
         List<T> results
 ) {
 }
