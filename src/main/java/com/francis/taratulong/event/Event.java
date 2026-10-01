@@ -1,5 +1,7 @@
 package com.francis.taratulong.event;
 
+import com.francis.taratulong.category.Category;
+import com.francis.taratulong.location.Location;
 import com.francis.taratulong.user.organization.Org;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -8,6 +10,8 @@ import lombok.Setter;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter@Setter@NoArgsConstructor
@@ -41,8 +45,17 @@ public class Event {
     @Column(nullable = false)
     private LocalDateTime cutOffTime;
 
-    @Column(nullable = false)
-    private String location;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")
+    private Location location;
+
+    @ManyToMany
+    @JoinTable(
+            name = "event_category",
+            joinColumns = @JoinColumn(name = "event_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<Category> categories = new HashSet<>();
 
     @Column(nullable = false)
     private int slotsAvailable;
