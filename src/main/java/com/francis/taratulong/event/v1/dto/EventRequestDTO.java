@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.UUID;
 
 public record EventRequestDTO(
 
@@ -20,10 +22,11 @@ public record EventRequestDTO(
         LocalDateTime endDateTime,
         @NotNull (message = "Cut off time required")
         LocalDateTime cutOffTime,
-        @NotBlank (message = "Location required")
-        String location,
+        @NotNull (message = "Location required")
+        UUID locationId,
         @NotNull (message = "Slots required")
-        int slotsAvailable
+        int slotsAvailable,
+        Set<String> categories
 
 ) {
 }

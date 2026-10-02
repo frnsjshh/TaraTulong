@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface AdminMapper {
     AdminResponseDTO toResponse(Admin admin);
-    Admin toEntity(AdminRequestDTO eventRequestDTO);
+    Admin toEntity(AdminRequestDTO adminRequestDTO);
     Admin toEntity(AdminRequestUpdateProfile updateProfile);
 
 }

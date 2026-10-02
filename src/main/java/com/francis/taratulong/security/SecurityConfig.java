@@ -49,7 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/volunteers/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/organizations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/organizations/**").permitAll() //Anyone can view the org details
-
+                        .requestMatchers(HttpMethod.GET, "/api/v1/locations/**").permitAll()
                         // --- SWAGGER / OPENAPI DOCS ---
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -58,7 +58,10 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // --- PROTECTED ROUTES ---
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/locations/**").hasRole("ADMIN")
 
                         // EVENTS
                         .requestMatchers(HttpMethod.POST, "/api/v1/events/**").hasRole("ORG")
