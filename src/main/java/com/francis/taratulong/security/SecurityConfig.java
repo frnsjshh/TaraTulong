@@ -60,6 +60,7 @@ public class SecurityConfig {
                         // --- PROTECTED ROUTES ---
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/locations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/locations/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/locations/**").hasRole("ADMIN")
 
                         // EVENTS

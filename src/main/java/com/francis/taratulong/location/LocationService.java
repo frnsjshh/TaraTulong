@@ -142,7 +142,6 @@ public class LocationService {
                 case "Reg" -> regions.add(location);
                 case "Prov" -> provinces.add(location);
                 case "Mun", "City" -> municipalities.add(location);
-                default -> log.warn("Unknown geographic level: {}", location.geographicLevel());
             }
         }
         log.info("Saving locations to repository");
@@ -174,6 +173,7 @@ public class LocationService {
         Location location = getLocationById(id, "Cannot add parent. Location not found");
         Location parent = getLocationById(parentId, "Cannot add parent. Parent location not found");
         location.setParent(parent);
+        log.info("Parent added: id={}, parentId={}", id, parentId);
         return location;
     }
 
