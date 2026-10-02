@@ -1,0 +1,13 @@
+# Spring Boot app database connection
+DB_HOST=
+DB_PORT=
+DB_NAME=
+DB_USERNAME=
+DB_PASSWORD=
+
+# PostgreSQL container initialization
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+# JWT
+JWT_SECRET=
