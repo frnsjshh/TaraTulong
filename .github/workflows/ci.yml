@@ -54,6 +54,7 @@ jobs:
           DB_USERNAME: ci_user
           DB_PASSWORD: ci_password
           JWT_SECRET: ci-test-secret
+          LOCATION_API_KEY: ci-test-key
         run: ./mvnw test
 
 
