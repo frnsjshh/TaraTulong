@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 
 @Validated
 public record VolunteerResponseDTO (
+        Long id,
         String email,
         String firstName,
         String lastName,

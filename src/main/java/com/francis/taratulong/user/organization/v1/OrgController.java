@@ -1,5 +1,6 @@
 package com.francis.taratulong.user.organization.v1;
 
+import com.francis.taratulong.user.AppUser;
 import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.organization.OrgService;
 import com.francis.taratulong.user.organization.v1.dto.OrgMapper;
@@ -8,6 +9,7 @@ import com.francis.taratulong.user.organization.v1.dto.OrgResponseDTO;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,12 @@ public class OrgController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<OrgResponseDTO> getMyOrg(@AuthenticationPrincipal AppUser appUser) {
+        OrgResponseDTO response = orgMapper.toResponse(orgService.getOrg(appUser.getId()));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

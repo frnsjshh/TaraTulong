@@ -50,6 +50,16 @@ public class EventController {
         return ResponseEntity.ok(eventPage.map(eventMapper::toResponseDTO));
     }
 
+    @GetMapping("/my-events")
+    public ResponseEntity<Page<EventResponseDTO>> getMyEvents(
+            @AuthenticationPrincipal AppUser currentOrg,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<Event> eventPage = eventService.getEventByOrganizer(currentOrg.getId(), page, size);
+        return ResponseEntity.ok(eventPage.map(eventMapper::toResponseDTO));
+    }
+
     @GetMapping("/org/{orgId}")
     public ResponseEntity<Page<EventResponseDTO>> getEventByOrganizer(
             @PathVariable Long orgId,

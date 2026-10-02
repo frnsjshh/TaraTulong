@@ -8,7 +8,9 @@ import org.mapstruct.Named;
 @Mapper(componentModel = "spring")
 public interface VolunteerMapper {
 
+    @Mapping(target = "id", source = "id")
     @Mapping(target = "trustTier", source = "trustScore", qualifiedByName = "tierCalculator")
+    @Mapping(target = "attendancePercentage", source = "attendanceRate")
     VolunteerResponseDTO toResponseDTO(Volunteer volunteer);
 
     Volunteer toEntity(VolunteerRequestDTO volunteerRequestDTO);

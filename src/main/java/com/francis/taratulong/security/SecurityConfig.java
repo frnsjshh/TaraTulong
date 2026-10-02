@@ -45,10 +45,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // --- PUBLIC ROUTES ---
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/events/my-events").hasRole("ORG")
                         .requestMatchers(HttpMethod.GET, "/api/v1/events/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/volunteers/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/organizations/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/organizations/**").permitAll() //Anyone can view the org details
+                        .requestMatchers("/api/v1/orgs/me").hasRole("ORG")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orgs/**", "/api/v1/organizations/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/orgs/**", "/api/v1/organizations/**").permitAll() //Anyone can view the org details
                         .requestMatchers(HttpMethod.GET, "/api/v1/locations/**").permitAll()
                         // --- SWAGGER / OPENAPI DOCS ---
                         .requestMatchers(
