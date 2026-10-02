@@ -1,0 +1,43 @@
+databases:
+  - name: taratulong-db
+    databaseName: taratulong
+    user: taratulong_user
+    plan: free
+    region: singapore
+
+services:
+  - type: web
+    name: taratulong-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/events
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: taratulong-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: taratulong-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: taratulong-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: taratulong-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: taratulong-db
+          property: password
+      - key: JWT_SECRET
+        sync: false
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+      - key: PORT
+        value: "8080"

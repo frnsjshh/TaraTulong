@@ -8,7 +8,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 ![CI](https://github.com/frnsjshh/TaraTulong/actions/workflows/ci.yml/badge.svg)
 
-> **TL;DR** — TaraTulong is a Spring Boot 4 REST API that models the volunteer-coordination workflow end to end: JWT-based RBAC across three roles, a registration state machine, concurrency-safe event capacity via optimistic locking, and a point-delta trust-scoring system that replaced a fragile "recalculate everything" approach. Deployed on **AWS EC2** via **Docker Compose**, with a full **GitHub Actions CI/CD pipeline** building, testing, and redeploying on every push to `main`.
+> **TL;DR** — TaraTulong is a Spring Boot 4 REST API that models the volunteer-coordination workflow end to end: JWT-based RBAC across three roles, a registration state machine, concurrency-safe event capacity via optimistic locking, a point-delta trust-scoring system that replaced a fragile "recalculate everything" approach, Philippine location hierarchy powered by the PSGC API, and hashtag-style event categorization. Deployed on **AWS EC2** via **Docker Compose**, with a full **GitHub Actions CI/CD pipeline** building, testing, and redeploying on every push to `main`.
 
 ## Live Demo
 
@@ -22,6 +22,9 @@
 - Designed a point-delta trust score so attendance *corrections* are idempotent — no need to replay history when an org fixes a mistaken no-show
 - Closed an IDOR gap by adding explicit resource-ownership checks in the service layer, on top of Spring Security's role checks
 - Solved an N+1 query problem on the event-registrations list with `JOIN FETCH` plus a dedicated `countQuery`
+- Integrated the **Philippine Standard Geographic Code (PSGC) API** to build a hierarchical location tree (Region → Province → City/Municipality), including automated fixups for known data quality issues in the API
+- Added **hashtag-style event categories** with automatic normalization and a many-to-many relationship, enabling multi-filter search
+- Built an **event search endpoint** that supports cascading location filters (region, province, city) and category-based filtering with OR logic
 - Shipped a complete CI/CD pipeline: GitHub Actions tests the build, pushes an image to GHCR, and redeploys to AWS EC2 automatically
 
 ---
@@ -35,8 +38,9 @@ Many grassroots organizations — student councils, school clubs, local NGOs, co
 - No capacity enforcement — events can be silently overbooked
 - No distinction between a responsible early cancellation and a no-show
 - Race conditions when two people try to claim the last available slot
+- No structured location data — events say "somewhere in Cebu" with no way to filter by region, province, or city
 
-TaraTulong models that coordination workflow as a proper backend system with role-based access, state-managed registrations, attendance tracking, and a reputation-scoring algorithm.
+TaraTulong models that coordination workflow as a proper backend system with role-based access, state-managed registrations, attendance tracking, a reputation-scoring algorithm, Philippine location hierarchy, and event tagging.
 
 The idea came from firsthand experience organizing reading tutorials for students at Macanhan Elementary School, where I saw how volunteer coordination breaks down without structure.
 
@@ -122,6 +126,53 @@ The request that loses the race gets:
 }
 ```
 
+### Location Hierarchy (PSGC Integration)
+
+Events are tied to structured Philippine locations instead of free-text strings. The location data is sourced from the **Philippine Standard Geographic Code (PSGC) API** and stored as a self-referencing hierarchy:
+
+```text
+Region → Province → City/Municipality
+```
+
+The import pipeline:
+1. Fetches all locations from the PSGC API in a single call
+2. Groups them by geographic level (Region, Province, Municipality/City)
+3. Saves each level in order, linking children to parents
+4. Runs automated fixups for **known PSGC data quality issues** — cities like Baguio, Davao, and Cebu that the API returns without a proper parent reference are corrected via a hardcoded override map
+
+The hierarchy powers **cascading dropdown endpoints** for frontend location selectors:
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/v1/locations/regions` | All regions |
+| `GET /api/v1/locations/provinces?regionId=<uuid>` | Provinces under a region |
+| `GET /api/v1/locations/cities?provinceId=<uuid>` | Cities under a province |
+
+### Event Categories (Tagging)
+
+Events support **hashtag-style categories** via a many-to-many relationship. Categories are auto-created on first use and normalized (lowercased, stripped of special characters, spaces → hyphens):
+
+```text
+"Community Service" → "community-service"
+"  Tree  Planting!! " → "tree-planting"
+```
+
+The `CategoryService` uses a **find-or-create** pattern with bulk resolution — existing categories are reused, new ones are auto-created in a single pass.
+
+### Event Search & Filtering
+
+The `/api/v1/events/search` endpoint supports multi-dimensional filtering with all parameters optional:
+
+| Parameter | Type | Description |
+|---|---|---|
+| `locationId` | UUID | Filter by exact city/municipality |
+| `provinceId` | UUID | Filter by province (includes all cities under it) |
+| `regionId` | UUID | Filter by region (includes all provinces and cities under it) |
+| `categoryNames` | List\<String\> | Filter by category names (OR logic) |
+| `page` / `size` | int | Pagination |
+
+Omit any parameter to skip that filter. This enables queries like *"Show me all tree-planting events in Cebu province"* or *"All events in NCR tagged community-service or education."*
+
 ### IDOR Prevention
 
 Authorization goes beyond role checks. The service layer verifies **resource ownership** before allowing operations:
@@ -153,6 +204,7 @@ Users and events are soft-deleted using Hibernate 6's `@SQLRestriction("deleted=
 | Object Mapping | MapStruct 1.5.5 |
 | Validation | Jakarta Bean Validation |
 | API Docs | OpenAPI 3 / Swagger UI (springdoc) |
+| External API | PSGC API (Philippine Standard Geographic Code) |
 | Testing | JUnit 5 + Mockito |
 | Build | Maven |
 | Containerization | Docker, Docker Compose |
@@ -168,9 +220,11 @@ flowchart TD
     B --> C["Service<br/>business rules, ownership checks, state transitions"]
     C --> D["Repository<br/>Spring Data JPA, JPQL"]
     D --> E[("PostgreSQL")]
+    C --> F["PSGC REST Client<br/>location import + fixups"]
+    F --> G["PSGC API<br/>classification.psa.gov.ph"]
 ```
 
-**Package structure is organized by feature** (event, registration, user, security) rather than by technical layer. Each feature contains its entity, service, repository, and a `v1/` subpackage with the controller and DTOs.
+**Package structure is organized by feature** (event, registration, user, security, location, category) rather than by technical layer. Each feature contains its entity, service, repository, and a `v1/` subpackage with the controller and DTOs.
 
 **DTOs use Java Records** at the API boundary — request DTOs carry validation annotations, response DTOs expose only the fields the client needs. MapStruct handles the mapping between entities and DTOs, including custom logic like the trust-tier calculation.
 
@@ -189,6 +243,9 @@ erDiagram
     VOLUNTEER ||--o{ REGISTRATION : "applies to"
     EVENT ||--o{ REGISTRATION : receives
     ADMIN ||--o{ ORG : approves
+    EVENT }o--|| LOCATION : "held at"
+    EVENT }o--o{ CATEGORY : "tagged with"
+    LOCATION |o--o{ LOCATION : "parent of"
 
     APP_USER {
         long id PK
@@ -223,7 +280,7 @@ erDiagram
         datetime startDateTime
         datetime endDateTime
         datetime cutOffTime
-        string location
+        uuid location_id FK
         int slotsAvailable
         int version
         boolean deleted
@@ -238,11 +295,25 @@ erDiagram
         string feedback
         datetime appliedAt
     }
+    LOCATION {
+        uuid id PK
+        string code UK
+        string name
+        string type
+        uuid parent_id FK
+    }
+    CATEGORY {
+        long id PK
+        string name UK
+    }
 ```
 
 - `Org` → `Event`: one-to-many (an org creates events)
 - `Volunteer` → `Registration` → `Event`: many-to-many through `Registration`
 - `Admin` → `Org`: one-to-many (admin approves organizations)
+- `Event` → `Location`: many-to-one (event held at a city/municipality)
+- `Event` ↔ `Category`: many-to-many via `event_category` join table
+- `Location` → `Location`: self-referencing hierarchy (Region → Province → City)
 - All relationships are `FetchType.LAZY` by default — eager loading only via explicit `JOIN FETCH` queries
 
 ---
@@ -285,6 +356,7 @@ All exceptions are caught by a `@ControllerAdvice` handler and returned in a con
 | `ObjectOptimisticLockingFailureException` | 409 | Concurrent modification detected |
 | `MethodArgumentNotValidException` | 400 | Bean validation failures (field-level messages) |
 | `UnauthorizedAccessException` | 403 | Resource ownership check failed |
+| `LocationNotFoundException` | 404 | Location ID not found in hierarchy |
 
 Validation errors extract field-level messages from `BindingResult` rather than returning raw framework exceptions.
 
@@ -303,7 +375,8 @@ Validation errors extract field-level messages from `BindingResult` rather than 
 | GET | `/api/v1/events` | Public | List all events (paginated, sorted by date) |
 | GET | `/api/v1/events/{id}` | Public | Get event details |
 | GET | `/api/v1/events/org/{orgId}` | Public | Events by organization (paginated) |
-| POST | `/api/v1/events` | ORG | Create event |
+| GET | `/api/v1/events/search` | Public | Search/filter by location hierarchy and categories |
+| POST | `/api/v1/events` | ORG | Create event (with location ID and categories) |
 | PUT | `/api/v1/events/{id}` | ORG (owner) | Update event |
 | DELETE | `/api/v1/events/{id}` | ORG (owner) | Soft delete event |
 
@@ -339,16 +412,35 @@ Validation errors extract field-level messages from `BindingResult` rather than 
 | PATCH | `/api/v1/admin/me/approve/{orgId}` | ADMIN | Approve organization |
 | PATCH | `/api/v1/admin/me/reject/{orgId}` | ADMIN | Reject organization |
 
+### Locations
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/v1/locations` | Public | List all locations |
+| GET | `/api/v1/locations/{id}` | Public | Get location with hierarchy |
+| GET | `/api/v1/locations/regions` | Public | List all regions |
+| GET | `/api/v1/locations/provinces?regionId=<uuid>` | Public | Provinces under a region |
+| GET | `/api/v1/locations/cities?provinceId=<uuid>` | Public | Cities under a province |
+| POST | `/api/v1/locations` | ADMIN | Import locations from PSGC API |
+| PUT | `/api/v1/locations/addparent?id=<uuid>&parentId=<uuid>` | ADMIN | Manually fix a parent relationship |
+| DELETE | `/api/v1/locations` | ADMIN | Delete all locations |
+
+### Categories
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/v1/categories` | Public | List all categories |
+
 Full interactive docs available via **Swagger UI** at `/swagger-ui.html` after starting the application.
 
 ---
 
 ## Database Performance
 
-- **Indexes** on `registration.event_id` and `registration.volunteer_id` (defined via `@Table(indexes = ...)` on the `Registration` entity)
+- **Indexes** on `registration.event_id`, `registration.volunteer_id`, `event.location_id`, `category.name`, and the `event_category` join table columns (defined via `@Table(indexes = ...)` and schema migrations)
 - **`FetchType.LAZY`** on all `@ManyToOne` and `@OneToMany` relationships
 - **`JOIN FETCH`** with a dedicated `countQuery` for the paginated registrations-by-event query — avoids both N+1 queries and the Hibernate pagination-with-fetch-join issue
 - **Pagination** on all list endpoints using Spring Data's `Pageable` with configurable size and sort
+- **Bulk operations** in the location import pipeline — batch saves by geographic level rather than individual inserts
+- **Bulk lookups** in the PSGC fixup step — a single `findByCodeIn` query rather than N individual fetches
 
 ---
 
@@ -481,7 +573,7 @@ The deploy job runs only after a successful build-and-test, and uses repository 
 
 - REST API with versioned endpoints (`/api/v1/`)
 - PostgreSQL persistence with Spring Data JPA / Hibernate 6
-- Database migrations with Flyway
+- Database migrations with Flyway (5 versioned migrations)
 - JWT authentication with stateless sessions
 - Role-based access control (Admin, Organization, Volunteer)
 - Event CRUD with capacity management
@@ -489,10 +581,15 @@ The deploy job runs only after a successful build-and-test, and uses repository 
 - Attendance tracking with early/late cancellation differentiation
 - Trust Score algorithm with point deltas and tier mapping
 - Optimistic locking for concurrent slot management
+- **Philippine location hierarchy** via PSGC API integration (Region → Province → City)
+- **Cascading location endpoints** for frontend dropdown selectors
+- **Automated PSGC data fixups** for orphaned cities/municipalities
+- **Hashtag-style event categories** with normalization and auto-creation
+- **Event search & filter** by location hierarchy and categories
 - DTO-based API boundary with MapStruct
 - Global exception handling with consistent error responses
 - Bean validation on all request DTOs
-- Database indexing on foreign keys
+- Database indexing on foreign keys and frequently queried columns
 - OpenAPI 3 / Swagger UI documentation
 - Soft deletes with `@SQLRestriction`
 - Organization approval workflow (Admin → Org)
@@ -505,8 +602,8 @@ The deploy job runs only after a successful build-and-test, and uses repository 
 ### Planned
 
 - Email notifications
-- Event search and filtering
 - Waitlist management
+- Frontend application
 
 ---
 
@@ -515,6 +612,8 @@ The deploy job runs only after a successful build-and-test, and uses repository 
 **Concurrent slot management** was the most technically interesting problem. Initially I didn't account for two simultaneous approvals claiming the last slot. Adding `@Version` to the `Event` entity solved this, but I also had to handle the resulting exception at the API layer — returning a meaningful 409 instead of a 500 with a Hibernate stack trace.
 
 **The point delta algorithm** went through several iterations. My first approach stored trust scores as absolute values recalculated from scratch on every update. This was expensive and fragile. The current delta-based approach (`newStatus.points - currentStatus.points`) handles corrections naturally — if an org accidentally marks a volunteer as `NO_SHOW` and then corrects it to `PRESENT`, the math self-corrects without needing to replay the entire history.
+
+**PSGC data quality** surprised me. The Philippine government's geographic code API returns several major cities (Baguio, Davao, Cebu, etc.) without proper parent references. Rather than silently dropping them or requiring manual fixes, I built a hardcoded override map of 21 known orphans that runs automatically after every import. This was a pragmatic trade-off — maintaining the map is low-effort since PSGC codes rarely change, and it keeps the import pipeline fully automated.
 
 **Soft deletes and unique constraints** were a practical annoyance. When a user is soft-deleted, their email still occupies the unique constraint. Mangling the email with a `DELETED_` prefix and timestamp was the pragmatic solution, though a proper approach might use a partial unique index in PostgreSQL.
 
@@ -532,9 +631,12 @@ The deploy job runs only after a successful build-and-test, and uses repository 
 - Preventing **IDOR vulnerabilities** through service-layer ownership verification
 - Solving the **N+1 query problem** with `JOIN FETCH` and `countQuery`
 - Using **optimistic locking** to handle concurrent updates
+- Integrating a **third-party government API** (PSGC) and handling its data quality issues pragmatically
+- Building **hierarchical data structures** with self-referencing JPA entities
+- Implementing **search and filter** across location hierarchies and tags
 - Building a **consistent error handling** strategy with `@ControllerAdvice`
 - Separating **persistence models from API contracts** using DTOs and MapStruct
-- Making **database performance decisions** (indexes, fetch strategies, pagination) based on query patterns
+- Making **database performance decisions** (indexes, fetch strategies, pagination, bulk operations) based on query patterns
 - Writing **focused unit tests** with Mockito to verify business logic in isolation
 - **Containerizing** a Spring Boot application with Docker and Docker Compose
 - Deploying to **AWS EC2** with a full GitHub Actions CI/CD pipeline
@@ -544,4 +646,4 @@ The deploy job runs only after a successful build-and-test, and uses repository 
 
 ## Contact
 
-Built by **Francis Joshua Gacutno** — [francisjoshuagacutno@gmail.com](mailto:francisjoshuagacutno@gmail.com) · [LinkedIn](https://www.linkedin.com/in/francis-joshua-gacutno-518470372/) · [GitHub](https://github.com/frnsjshh)
+Built by **[Francis Joshua Gacutno]** — [francisjoshuagacutno@gmail.com](mailto:francisjoshuagacutno@gmail.com) · [LinkedIn](https://www.linkedin.com/in/francis-joshua-gacutno-518470372/) · [GitHub](https://github.com/frnsjshh)
