@@ -10,12 +10,11 @@
 
 > **TL;DR** — TaraTulong is a Spring Boot 4 REST API that models the volunteer-coordination workflow end to end: JWT-based RBAC across three roles, a registration state machine, concurrency-safe event capacity via optimistic locking, a point-delta trust-scoring system that replaced a fragile "recalculate everything" approach, Philippine location hierarchy powered by the PSGC API, and hashtag-style event categorization. Deployed on **AWS EC2** via **Docker Compose**, with a full **GitHub Actions CI/CD pipeline** building, testing, and redeploying on every push to `main`.
 
-## Live Demo
+## Live Demo (offline right now to save on AWS costs — message me and I'll have it up in under a minute)
 
 - **Swagger UI:** `http://13.251.90.175:8080/swagger-ui.html`
 - **Base API URL:** `http://13.251.90.175:8080/api/v1`
 
-*Replace the placeholder with your EC2 public IP, or better, an Elastic IP / Route 53 domain so the link survives an instance restart. If you stop the instance between demos to manage cost, say so here — e.g. "offline right now to save on AWS costs — message me and I'll have it up in under a minute."*
 
 ## Highlights
 
