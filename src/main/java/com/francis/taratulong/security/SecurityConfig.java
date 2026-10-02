@@ -60,7 +60,8 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // --- PROTECTED ROUTES ---
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                          .requestMatchers(HttpMethod.POST, "/api/v1/admin/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/locations/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/locations/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/locations/**").hasRole("ADMIN")
