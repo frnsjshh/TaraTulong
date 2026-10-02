@@ -1,15 +1,22 @@
 package com.francis.taratulong.user.admin.v1;
 
+import com.francis.taratulong.Status;
 import com.francis.taratulong.user.AppUser;
 import com.francis.taratulong.user.AppUserService;
 import com.francis.taratulong.user.admin.AdminService;
 import com.francis.taratulong.user.admin.v1.dto.AdminMapper;
+import com.francis.taratulong.user.admin.v1.dto.AdminOrgResponseDTO;
 import com.francis.taratulong.user.admin.v1.dto.AdminRequestDTO;
 import com.francis.taratulong.user.admin.v1.dto.AdminRequestUpdateProfile;
 import com.francis.taratulong.user.admin.v1.dto.AdminResponseDTO;
+import com.francis.taratulong.user.organization.Org;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,6 +53,28 @@ public class AdminController {
         return ResponseEntity.ok(
                 adminMapper.toResponse(adminService.updateAdmin(appUser.getId(), adminMapper.toEntity(requestDTO)))
         );
+    }
+
+    @GetMapping("/orgs")
+    public ResponseEntity<Page<AdminOrgResponseDTO>> getOrgs(
+            @RequestParam(required = false) Status status,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<Org> orgs = adminService.getOrgs(status, pageable);
+        return ResponseEntity.ok(orgs.map(adminMapper::toAdminOrgResponseDTO));
+    }
+
+    @GetMapping("/orgs/pending")
+    public ResponseEntity<Page<AdminOrgResponseDTO>> getPendingOrgs(
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<Org> orgs = adminService.getOrgs(Status.PENDING, pageable);
+        return ResponseEntity.ok(orgs.map(adminMapper::toAdminOrgResponseDTO));
+    }
+
+    @GetMapping("/orgs/{orgId}")
+    public ResponseEntity<AdminOrgResponseDTO> getOrgDetails(@PathVariable Long orgId) {
+        return ResponseEntity.ok(adminMapper.toAdminOrgResponseDTO(adminService.getOrgDetails(orgId)));
     }
 
     @PatchMapping("/me/approve/{orgId}")

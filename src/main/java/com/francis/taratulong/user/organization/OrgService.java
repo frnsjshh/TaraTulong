@@ -1,11 +1,14 @@
 package com.francis.taratulong.user.organization;
 
+import com.francis.taratulong.Status;
 import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -43,5 +46,9 @@ public class OrgService {
 
     public boolean orgExist(Long id) {
         return orgRepository.existsById(id);
+    }
+
+    public Page<Org> getOrgs(Status status, Pageable pageable) {
+        return orgRepository.findAllByStatus(status, pageable);
     }
 }

@@ -1,5 +1,6 @@
 package com.francis.taratulong.user.organization;
 
+import com.francis.taratulong.Status;
 import com.francis.taratulong.exception.UserAlreadyExistsException;
 import com.francis.taratulong.exception.UserNotFoundException;
 import com.francis.taratulong.user.Role;
@@ -11,8 +12,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -191,6 +197,29 @@ class OrgServiceTest {
             when(orgRepository.existsById(999L)).thenReturn(false);
 
             assertFalse(orgService.orgExist(999L));
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // getOrgs
+    // ══════════════════════════════════════════════════════════════════
+    @Nested
+    @DisplayName("getOrgs")
+    class GetOrgs {
+
+        @Test
+        @DisplayName("should return paginated orgs from repository")
+        void shouldReturnPaginatedOrgs() {
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Org> orgPage = new PageImpl<>(List.of(org), pageable, 1);
+
+            when(orgRepository.findAllByStatus(Status.PENDING, pageable)).thenReturn(orgPage);
+
+            Page<Org> result = orgService.getOrgs(Status.PENDING, pageable);
+
+            assertEquals(1, result.getTotalElements());
+            assertEquals(org, result.getContent().get(0));
+            verify(orgRepository).findAllByStatus(Status.PENDING, pageable);
         }
     }
 }

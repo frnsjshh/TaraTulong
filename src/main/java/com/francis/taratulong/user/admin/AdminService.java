@@ -8,6 +8,8 @@ import com.francis.taratulong.user.organization.Org;
 import com.francis.taratulong.user.organization.OrgService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,5 +58,13 @@ public class AdminService {
         Org org = orgService.getOrg(orgID);
         org.setStatus(Status.REJECTED);
         log.info("Organization rejected: orgId={}", orgID);
+    }
+
+    public Page<Org> getOrgs(Status status, Pageable pageable) {
+        return orgService.getOrgs(status, pageable);
+    }
+
+    public Org getOrgDetails(Long orgId) {
+        return orgService.getOrg(orgId);
     }
 }

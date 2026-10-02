@@ -14,8 +14,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -214,6 +219,80 @@ class AdminServiceTest {
             adminService.rejectOrg(100L);
 
             assertEquals(Status.REJECTED, org.getStatus());
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // getOrgs
+    // ══════════════════════════════════════════════════════════════════
+    @Nested
+    @DisplayName("getOrgs")
+    class GetOrgs {
+
+        @Test
+        @DisplayName("should return paginated organizations filtered by status")
+        void shouldReturnOrgsFilteredByStatus() {
+            Org org = new Org();
+            org.setId(100L);
+            org.setStatus(Status.PENDING);
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Org> orgPage = new PageImpl<>(List.of(org), pageable, 1);
+
+            when(orgService.getOrgs(Status.PENDING, pageable)).thenReturn(orgPage);
+
+            Page<Org> result = adminService.getOrgs(Status.PENDING, pageable);
+
+            assertEquals(1, result.getTotalElements());
+            assertEquals(Status.PENDING, result.getContent().get(0).getStatus());
+            verify(orgService).getOrgs(Status.PENDING, pageable);
+        }
+
+        @Test
+        @DisplayName("should return all organizations when status is null")
+        void shouldReturnAllOrgsWhenStatusNull() {
+            Org pendingOrg = new Org();
+            pendingOrg.setId(100L);
+            pendingOrg.setStatus(Status.PENDING);
+
+            Org approvedOrg = new Org();
+            approvedOrg.setId(101L);
+            approvedOrg.setStatus(Status.APPROVED);
+
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Org> orgPage = new PageImpl<>(List.of(pendingOrg, approvedOrg), pageable, 2);
+
+            when(orgService.getOrgs(null, pageable)).thenReturn(orgPage);
+
+            Page<Org> result = adminService.getOrgs(null, pageable);
+
+            assertEquals(2, result.getTotalElements());
+            verify(orgService).getOrgs(null, pageable);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // getOrgDetails
+    // ══════════════════════════════════════════════════════════════════
+    @Nested
+    @DisplayName("getOrgDetails")
+    class GetOrgDetails {
+
+        @Test
+        @DisplayName("should return organization details by id")
+        void shouldReturnOrgDetails() {
+            Org org = new Org();
+            org.setId(100L);
+            org.setName("Red Cross");
+            org.setStatus(Status.PENDING);
+
+            when(orgService.getOrg(100L)).thenReturn(org);
+
+            Org result = adminService.getOrgDetails(100L);
+
+            assertNotNull(result);
+            assertEquals(100L, result.getId());
+            assertEquals("Red Cross", result.getName());
+            verify(orgService).getOrg(100L);
         }
     }
 }
