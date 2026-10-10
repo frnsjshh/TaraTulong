@@ -30,6 +30,6 @@ public class AuthService {
         AppUser user = (AppUser) authentication.getPrincipal();
         String jwtToken = jwtService.generateToken(user);
         log.info("Login successful: email={}, role={}", user.getEmail(), user.getRole());
-        return new AuthResponse(jwtToken);
+        return new AuthResponse(jwtToken, user.getRole());
     }
 }

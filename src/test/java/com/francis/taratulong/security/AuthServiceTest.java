@@ -75,6 +75,7 @@ class AuthServiceTest {
             // ASSERT
             assertNotNull(response);
             assertEquals("jwt.token.here", response.token());
+            assertEquals(Role.VOLUNTEER, response.role());
 
             // Verify the authentication manager was actually called
             verify(authenticationManager).authenticate(
