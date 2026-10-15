@@ -60,9 +60,10 @@ public class LocationService {
         log.info("Attempting to save locations to repository");
 
         //saving region entities
-        List<Location> regionsEntity = regionsDTO.stream().map(
+        List<Location> regionsEntity = new ArrayList<>(regionsDTO.stream().map(
                 region -> LocationMapper.toEntity(region, LocationType.REGION)
-        ).toList();
+        ).toList());
+        regionsEntity.removeIf(region -> locationRepository.findByCode(region.getCode()).isPresent());
         locationRepository.saveAll(regionsEntity);
         log.info("Saved {} regions to repository", regionsEntity.size());
 
@@ -76,9 +77,9 @@ public class LocationService {
         }
 
         //saving province entities
-        List<Location> provinceEntity = provinceDTO.stream().map(
+        List<Location> provinceEntity = new ArrayList<>(provinceDTO.stream().map(
                 province -> LocationMapper.toEntity(province, LocationType.PROVINCE)
-        ).toList();
+        ).toList());
         for(int i = 0; i < provinceEntity.size(); i++) {
             Location reg = regionMap.get(provinceDTO.get(i).reg());
             if (reg == null) {
@@ -87,8 +88,10 @@ public class LocationService {
             }
             provinceEntity.get(i).setParent(reg);
         }
-        log.info("Saved {} provinces to repository", provinceEntity.size());
+        provinceEntity.removeIf(province -> locationRepository.findByCode(province.getCode()).isPresent());
         locationRepository.saveAll(provinceEntity);
+        log.info("Saved {} provinces to repository", provinceEntity.size());
+
 
         //creating province map
         Map<Integer, Location> provinceMap = new HashMap<>();
@@ -100,9 +103,9 @@ public class LocationService {
         }
 
         //Convert municipalities and connect to province
-        List<Location> municipalityEntity = municipalityDTO.stream().map(
+        List<Location> municipalityEntity = new ArrayList<>(municipalityDTO.stream().map(
                 municipality -> LocationMapper.toEntity(municipality, LocationType.MUNICIPALITY)
-        ).toList();
+        ).toList());
         for(int i = 0; i < municipalityEntity.size(); i++) {
             Location province = provinceMap.get(municipalityDTO.get(i).prv());
             if (province != null) {
@@ -118,8 +121,9 @@ public class LocationService {
             }
 
         }
-        log.info("Saved {} municipalities to repository", municipalityEntity.size());
+        municipalityEntity.removeIf(municipality -> locationRepository.findByCode(municipality.getCode()).isPresent());
         locationRepository.saveAll(municipalityEntity);
+        log.info("Saved {} municipalities to repository", municipalityEntity.size());
 
         // Fix cities/municipalities that the PSGC API returns without a parent
         fixOrphanedLocations();
