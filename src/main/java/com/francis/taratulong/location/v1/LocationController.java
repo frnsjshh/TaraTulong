@@ -92,7 +92,15 @@ public class LocationController {
             @RequestParam UUID id,
             @RequestParam UUID parentId
     ) {
-        Location location = locationService.addParent(id, parentId);
+        Location location = locationService.updateParent(id, parentId);
         return ResponseEntity.ok(LocationMapper.toResponseDTO(location));
+    }
+
+    @GetMapping("/orphans")
+    public ResponseEntity<List<LocationResponseDTO>> getOrphanedLocations() {
+        List<LocationResponseDTO> orphans = locationService.getOrphanedLocations().stream()
+                .map(LocationMapper::toResponseDTO)
+                .toList();
+        return ResponseEntity.ok(orphans);
     }
 }

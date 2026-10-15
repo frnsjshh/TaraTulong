@@ -172,7 +172,7 @@ public class LocationService {
         return locationRepository.findById(id).orElseThrow(()-> new LocationNotFoundException(errorMsg));
     }
 
-    public Location addParent(UUID id, UUID parentId) {
+    public Location updateParent(UUID id, UUID parentId) {
         log.info("Adding parent to location: id={}, parentId={}", id, parentId);
         Location location = getLocationById(id, "Cannot add parent. Location not found");
         Location parent = getLocationById(parentId, "Cannot add parent. Parent location not found");
@@ -180,6 +180,7 @@ public class LocationService {
         log.info("Parent added: id={}, parentId={}", id, parentId);
         return location;
     }
+
 
     // ─── PSGC data fixup ───
 
@@ -224,6 +225,14 @@ public class LocationService {
         }
 
         log.info("Fixed {}/{} orphaned locations", fixed, PSGC_PARENT_OVERRIDES.size());
+    }
+
+    public List<Location> getOrphanedLocations() {
+        log.info("Getting orphaned locations");
+        List<Location> orphancedLocations = new ArrayList<>(locationRepository.findByParentIdIsNull());
+        orphancedLocations.removeIf(location -> location.getType() == LocationType.REGION);
+        log.info("Orphaned locations: {}", orphancedLocations.size());
+        return orphancedLocations;
     }
 
     // ─── Hierarchy query methods for frontend cascading dropdowns ───

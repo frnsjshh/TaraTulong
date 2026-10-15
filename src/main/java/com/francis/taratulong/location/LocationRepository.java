@@ -20,4 +20,6 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     Optional<Location> findByCode(String code);
 
     List<Location> findByCodeIn(Collection<String> codes);
+
+    List<Location> findByParentIdIsNull();
 }
